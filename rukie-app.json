@@ -1,5 +1,15 @@
 {
   "version": 1,
   "dockerfile": "Dockerfile",
-  "endpoints": [{ "name": "web", "port": 8080, "path": "/health/ready" }]
+  "endpoints": [
+    {
+      "name": "web",
+      "port": 8080,
+      "path": "/health/ready"
+    }
+  ],
+  "databases": [
+    "main"
+  ],
+  "blob_storage": true
 }

@@ -20,10 +20,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-//go:embed web migrations/001_notes.sql
+//go:embed web migrations
 var assets embed.FS
 
-type application struct{ db *pgxpool.Pool }
+type application struct {
+	db    *pgxpool.Pool
+	blobs blobStorage
+}
 type note struct {
 	ID        int64     `json:"id"`
 	Body      string    `json:"body"`
@@ -38,8 +41,8 @@ func jsonResponse(w http.ResponseWriter, status int, value any) {
 }
 
 func (a application) failure(w http.ResponseWriter, err error) {
-	slog.Error("database operation failed", "error", err)
-	jsonResponse(w, 503, map[string]string{"error": "Database unavailable. Please try again."})
+	slog.Error("storage operation failed", "error", err)
+	jsonResponse(w, 503, map[string]string{"error": "Storage unavailable. Please try again."})
 }
 
 func (a application) list(w http.ResponseWriter, r *http.Request) {
@@ -111,14 +114,45 @@ func (a application) remove(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
-	result, err := a.db.Exec(ctx, "DELETE FROM notes WHERE id=$1", id)
+	tx, err := a.db.Begin(ctx)
 	if err != nil {
 		a.failure(w, err)
 		return
 	}
-	if result.RowsAffected() == 0 {
+	defer tx.Rollback(ctx)
+	var parent int64
+	if err = tx.QueryRow(ctx, "SELECT id FROM notes WHERE id=$1 FOR UPDATE", id).Scan(&parent); errors.Is(err, pgx.ErrNoRows) {
 		jsonResponse(w, 404, map[string]string{"error": "Note not found."})
 		return
+	} else if err != nil {
+		a.failure(w, err)
+		return
+	}
+	rows, err := tx.Query(ctx, "SELECT id FROM attachments WHERE note_id=$1", id)
+	if err != nil {
+		a.failure(w, err)
+		return
+	}
+	keys, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		a.failure(w, err)
+		return
+	}
+
+	if _, err = tx.Exec(ctx, "DELETE FROM attachments WHERE note_id=$1", id); err != nil {
+		a.failure(w, err)
+		return
+	}
+	if _, err = tx.Exec(ctx, "DELETE FROM notes WHERE id=$1", id); err != nil {
+		a.failure(w, err)
+		return
+	}
+	if err = tx.Commit(ctx); err != nil {
+		a.failure(w, err)
+		return
+	}
+	for _, key := range keys {
+		a.removeBlob(r.Context(), key)
 	}
 	w.WriteHeader(204)
 }
@@ -138,6 +172,13 @@ func migrate(ctx context.Context, db *pgxpool.Pool) error {
 		return err
 	}
 	if _, err = tx.Exec(ctx, string(script)); err != nil {
+		return err
+	}
+	attachments, err := assets.ReadFile("migrations/002_attachments.sql")
+	if err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, string(attachments)); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
@@ -165,8 +206,16 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	a := application{db: db}
+	blobs := blobStorage{endpoint: os.Getenv("BLOB_STORAGE_URL"), token: os.Getenv("BLOB_STORAGE_TOKEN"), client: &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
+	if blobs.endpoint == "" || blobs.token == "" {
+		return errors.New("platform blob storage binding is required")
+	}
+	a := application{db: db, blobs: blobs}
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/notes/{id}/attachments", a.attachments)
+	mux.HandleFunc("POST /api/notes/{id}/attachments", a.upload)
+	mux.HandleFunc("GET /api/attachments/{key}", a.download)
+	mux.HandleFunc("DELETE /api/attachments/{key}", a.deleteAttachment)
 	mux.HandleFunc("GET /api/notes", a.list)
 	mux.HandleFunc("POST /api/notes", a.save)
 	mux.HandleFunc("PUT /api/notes/{id}", a.save)
@@ -182,7 +231,7 @@ func run(ctx context.Context) error {
 		check, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		var ready bool
-		err := db.QueryRow(check, "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version=1) AND (SELECT count(*)>=0 FROM notes)").Scan(&ready)
+		err := db.QueryRow(check, "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version=2) AND (SELECT count(*)>=0 FROM notes)").Scan(&ready)
 		if err != nil {
 			a.failure(w, err)
 			return

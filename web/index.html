@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Notes · Hosted app</title>
   <link rel="stylesheet" href="./style.css">
-  <script src="./app.js" defer></script>
+  <script type="module" src="./app.js"></script>
 </head>
 <body>
   <main>
@@ -28,8 +28,8 @@
         <div id="notes"></div>
       </section>
     </div>
-    <footer>Notes are stored in PostgreSQL. Replacing the app leaves them here.</footer>
+    <footer>Notes live in PostgreSQL; attachments live in blob storage. Both survive app replacement.</footer>
   </main>
-  <template id="note-template"><article><p class="note-body"></p><div class="note-footer"><time></time><div><button class="secondary edit">Edit</button><button class="secondary delete">Delete</button></div></div></article></template>
+  <template id="note-template"><article><p class="note-body"></p><section class="attachments" aria-label="Attachments"></section><div class="note-footer"><time></time><div><button class="secondary edit">Edit</button><button class="secondary delete">Delete</button></div></div></article></template>
 </body>
 </html>

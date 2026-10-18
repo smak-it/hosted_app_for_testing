@@ -5,10 +5,20 @@ services:
       - "127.0.0.1:${PORT:-8080}:8080"
     environment:
       DATABASE_URL: postgres://notes:notes@postgres:5432/notes?sslmode=disable
+      BLOB_STORAGE_URL: http://blobs:8080/blobs
+      BLOB_STORAGE_TOKEN: local-development-only
       WELCOME_MESSAGE: Notes that stay with you across releases.
     depends_on:
       postgres:
         condition: service_healthy
+      blobs:
+        condition: service_started
+  blobs:
+    image: python:3.13-alpine
+    command: python /devtools/blob_service.py
+    volumes:
+      - ./devtools/blob_service.py:/devtools/blob_service.py:ro
+      - attachments_data:/data
   postgres:
     image: postgres:18
     environment:
@@ -24,3 +34,4 @@ services:
       retries: 30
 volumes:
   notes_data:
+  attachments_data:

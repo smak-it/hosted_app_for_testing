@@ -1,3 +1,4 @@
+import { renderAttachments } from './attachments.js';
 const form = document.querySelector('#note-form');
 const body = document.querySelector('#body');
 const save = document.querySelector('#save');
@@ -8,13 +9,13 @@ let editing = null;
 let busy = false;
 function setBusy(value) {
   busy = value;
-  for (const control of document.querySelectorAll('button, textarea')) control.disabled = value;
+  for (const control of document.querySelectorAll('button, textarea, input')) control.disabled = value;
 }
 
 async function request(path, options = {}) {
   const response = await fetch(new URL(path, window.location.href), {
     ...options,
-    headers: { 'Content-Type': 'application/json' },
+    headers: options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' },
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) {
@@ -39,11 +40,12 @@ function resetEditor() {
   cancel.hidden = true;
 }
 
+let loadRevision = 0;
 async function loadNotes() {
+  const revision = ++loadRevision;
   const notes = await request('api/notes');
   const list = document.querySelector('#notes');
-  list.replaceChildren();
-  document.querySelector('#empty').hidden = notes.length !== 0;
+  const contents = document.createDocumentFragment();
   for (const note of notes) {
     const fragment = document.querySelector('#note-template').content.cloneNode(true);
     fragment.querySelector('.note-body').textContent = note.body;
@@ -70,8 +72,13 @@ async function loadNotes() {
         throw failure;
       } finally { setBusy(false); }
     }));
+    await renderAttachments(fragment.querySelector('.attachments'), note.id, { request, action, setBusy, refresh: loadNotes });
     for (const button of fragment.querySelectorAll('button')) button.disabled = busy;
-    list.append(fragment);
+    contents.append(fragment);
+  }
+  if (revision === loadRevision) {
+    list.replaceChildren(contents);
+    document.querySelector('#empty').hidden = notes.length !== 0;
   }
 }
 
