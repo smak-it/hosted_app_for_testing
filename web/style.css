@@ -1,0 +1,31 @@
+:root { font-family: system-ui, sans-serif; color: #20334b; background: #f5f8fc; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1080px; margin: 64px auto; padding: 0 28px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+h1 { font-size: 48px; letter-spacing: -2px; margin: 0; }
+h2 { font-size: 18px; margin: 0 0 22px; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: #536783; }
+.version { font: 13px ui-monospace, monospace; padding: 10px 16px; border: 1px solid #ccd9e8; border-radius: 24px; white-space: nowrap; }
+.intro { color: #536783; margin: 18px 0 40px; }
+.workspace { display: grid; grid-template-columns: 340px 1fr; gap: 40px; align-items: start; }
+.editor { padding: 24px; background: #eaf0f8; border-radius: 14px; }
+label { display: block; margin-bottom: 8px; font-size: 14px; }
+textarea { resize: vertical; min-height: 140px; width: 100%; border: 1px solid #aabed5; border-radius: 8px; padding: 12px; font: inherit; color: inherit; background: white; }
+button { cursor: pointer; border: 1px solid transparent; border-radius: 7px; padding: 10px 14px; background: #285ca0; color: white; font: inherit; font-size: 14px; }
+button:hover { filter: brightness(.92); }
+button:disabled { opacity: .6; cursor: wait; }
+button.secondary { background: transparent; color: #285ca0; border-color: #ccd9e8; }
+:focus-visible { outline: 3px solid #4c85ca; outline-offset: 3px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.list-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+article { background: white; border: 1px solid #dce5ef; border-left: 4px solid #85a8d4; border-radius: 8px; padding: 18px 20px; margin: 14px 0; }
+.note-body { margin: 0 0 20px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.note-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+time, footer, #empty { color: #536783; font-size: 13px; }
+.note-footer button { padding: 6px 10px; }
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #dce5ef; }
+#status { font-size: 14px; }
+#error { color: #a02b3c; line-height: 1.5; }
+[hidden] { display: none !important; }
+@media(max-width: 720px) { main { margin-top: 28px; padding: 0 18px; } .workspace { grid-template-columns: 1fr; gap: 28px; } h1 { font-size: 38px; } }

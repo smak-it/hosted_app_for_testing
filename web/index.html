@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Notes · Hosted app</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><div><p class="eyebrow">A Rukie hosted app</p><h1>Notes</h1></div><span id="version" class="version">Loading release…</span></header>
+    <p id="welcome" class="intro">A little space for things worth keeping.</p>
+    <div class="workspace">
+      <section class="editor" aria-labelledby="editor-title">
+        <h2 id="editor-title">New note</h2>
+        <form id="note-form">
+          <label for="body">Note</label>
+          <textarea id="body" name="body" rows="7" maxlength="4000" required placeholder="What would you like to remember?"></textarea>
+          <div class="actions"><button id="save" type="submit">Add note</button><button id="cancel" type="button" class="secondary" hidden>Cancel edit</button></div>
+        </form>
+        <p role="status" id="status" aria-live="polite"></p>
+        <p role="alert" id="error" hidden></p>
+      </section>
+      <section aria-labelledby="notes-title">
+        <div class="list-heading"><h2 id="notes-title">Your notes</h2><button id="refresh" class="secondary">Refresh notes</button></div>
+        <p id="empty" hidden>No notes yet. Add your first one.</p>
+        <div id="notes"></div>
+      </section>
+    </div>
+    <footer>Notes are stored in PostgreSQL. Replacing the app leaves them here.</footer>
+  </main>
+  <template id="note-template"><article><p class="note-body"></p><div class="note-footer"><time></time><div><button class="secondary edit">Edit</button><button class="secondary delete">Delete</button></div></div></article></template>
+</body>
+</html>
