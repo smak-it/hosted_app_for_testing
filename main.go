@@ -20,7 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-//go:embed web migrations/001_notes.sql VERSION
+//go:embed web migrations/001_notes.sql
 var assets embed.FS
 
 type application struct{ db *pgxpool.Pool }
@@ -171,7 +171,10 @@ func run(ctx context.Context) error {
 	mux.HandleFunc("POST /api/notes", a.save)
 	mux.HandleFunc("PUT /api/notes/{id}", a.save)
 	mux.HandleFunc("DELETE /api/notes/{id}", a.remove)
-	version, _ := assets.ReadFile("VERSION")
+	version, err := os.ReadFile("VERSION")
+	if err != nil {
+		return err
+	}
 	mux.HandleFunc("GET /api/info", func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, 200, map[string]string{"version": strings.TrimSpace(string(version)), "message": os.Getenv("WELCOME_MESSAGE")})
 	})
