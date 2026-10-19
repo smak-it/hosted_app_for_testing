@@ -53,7 +53,7 @@ async function loadNotes() {
     fragment.querySelector('.note-body').textContent = note.body;
     const open = fragment.querySelector('.open-note');
     open.href = `/notes/${note.id}`;
-    open.addEventListener('click', (event) => { event.preventDefault(); history.pushState({}, '', open.href); action(loadNotes); });
+    open.addEventListener('click', (event) => { event.preventDefault(); navigateNotes(open.href); });
     const time = fragment.querySelector('time');
     time.dateTime = note.updated_at;
     time.textContent = new Date(note.updated_at).toLocaleString();
@@ -104,8 +104,14 @@ form.addEventListener('submit', (event) => {
 });
 cancel.addEventListener('click', resetEditor);
 document.querySelector('#refresh').addEventListener('click', () => action(loadNotes));
-document.querySelector('#all-notes').addEventListener('click', (event) => { event.preventDefault(); history.pushState({}, '', '/'); action(loadNotes); });
-window.addEventListener('popstate', () => action(loadNotes));
+function navigateNotes(path) {
+  history.pushState({}, '', path);
+  document.querySelector('#notes').replaceChildren();
+  resetEditor();
+  action(loadNotes);
+}
+document.querySelector('#all-notes').addEventListener('click', (event) => { event.preventDefault(); navigateNotes('/'); });
+window.addEventListener('popstate', () => { document.querySelector('#notes').replaceChildren(); resetEditor(); action(loadNotes); });
 action(async () => {
   const config = await request('api/config');
   document.querySelector('#environment').textContent = `Environment: ${config.environment}`;
