@@ -58,7 +58,7 @@ Frontend requests use relative URLs so the same image works at a domain root or 
 
 The container always serves a Vite production build. There is no development server or hot reload, including when `RUKIE_APP_ENV=development`.
 
-The manifest declares named ports and `health_path`. VM-plane injects `RUKIE_PUBLIC_URLS` (a JSON map from endpoint names to absolute browser-visible URLs) and `RUKIE_APP_ENV` (`production` by default). The same image can run behind different hostnames, HTTP/HTTPS, and external ports without rebuilding. The backend exposes only these public settings at `/api/config`; database and blob credentials stay server-side.
+The manifest declares named ports and `health_path`. VM-plane injects `RUKIE_PUBLIC_URLS` (a JSON map from endpoint names to absolute browser-visible URLs). `RUKIE_APP_ENV` is an optional setting owned by this testing app, defaults to `production`, and can be set locally; it is not part of the hosted-app deployment API or injected by VM-plane. The same image can run behind different hostnames, HTTP/HTTPS, and external ports without rebuilding. The backend exposes only these public settings at `/api/config`; database and blob credentials stay server-side.
 
 Frontend API calls and assets use the endpoint root. `/notes/<id>` supports direct navigation and refresh. “Remember this browser” is a display preference, **not authentication**: it exercises a host-only HttpOnly cookie and an absolute redirect to the assigned URL. Cookies use Secure when that URL is HTTPS.
 
