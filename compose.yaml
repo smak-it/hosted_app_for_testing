@@ -4,6 +4,8 @@ services:
     ports:
       - "127.0.0.1:${PORT:-8080}:8080"
     environment:
+      RUKIE_APP_ENV: ${RUKIE_APP_ENV:-production}
+      RUKIE_PUBLIC_URLS: '{"web":"${PUBLIC_APP_URL:-http://localhost:${PORT:-8080}}/"}'
       DATABASE_URL: postgres://notes:notes@postgres:5432/notes?sslmode=disable
       BLOB_STORAGE_URL: http://blobs:8080/blobs
       BLOB_STORAGE_TOKEN: local-development-only

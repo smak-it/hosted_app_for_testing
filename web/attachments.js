@@ -6,7 +6,7 @@ export async function renderAttachments(section, noteID, { request, action, setB
   for (const item of items) {
     const row = document.createElement('p');
     const link = document.createElement('a');
-    link.href = new URL(`api/attachments/${item.id}`, window.location.href);
+    link.href = new URL(`api/attachments/${item.id}`, window.location.origin + "/");
     link.textContent = item.filename;
     link.download = item.filename;
     const remove = document.createElement('button');
