@@ -70,6 +70,7 @@ async function loadNotes() {
       try {
         await request(`api/notes/${note.id}`, { method: 'DELETE' });
         if (editing === note.id) resetEditor();
+        if (/^\/notes\/\d+\/?$/.test(window.location.pathname)) history.replaceState({}, '', '/');
         await loadNotes();
         status.textContent = 'Note deleted.';
       } catch (failure) {
