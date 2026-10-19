@@ -1,2 +1,5 @@
 .env
 /hosted_app_for_testing
+
+/node_modules
+/dist

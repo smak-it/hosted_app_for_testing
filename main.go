@@ -20,7 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-//go:embed web migrations
+//go:embed dist migrations
 var assets embed.FS
 
 type application struct {
@@ -212,11 +212,15 @@ func run(ctx context.Context) error {
 	}
 	a := application{db: db, blobs: blobs}
 	mux := http.NewServeMux()
+	if err := registerPublicConfig(mux); err != nil {
+		return err
+	}
 	mux.HandleFunc("GET /api/notes/{id}/attachments", a.attachments)
 	mux.HandleFunc("POST /api/notes/{id}/attachments", a.upload)
 	mux.HandleFunc("GET /api/attachments/{key}", a.download)
 	mux.HandleFunc("DELETE /api/attachments/{key}", a.deleteAttachment)
 	mux.HandleFunc("GET /api/notes", a.list)
+	mux.HandleFunc("GET /api/notes/{id}", a.getNote)
 	mux.HandleFunc("POST /api/notes", a.save)
 	mux.HandleFunc("PUT /api/notes/{id}", a.save)
 	mux.HandleFunc("DELETE /api/notes/{id}", a.remove)
@@ -242,8 +246,21 @@ func run(ctx context.Context) error {
 		}
 		jsonResponse(w, 200, map[string]string{"status": "ready"})
 	})
-	web, _ := fs.Sub(assets, "web")
-	mux.Handle("GET /", http.FileServer(http.FS(web)))
+	web, _ := fs.Sub(assets, "dist")
+	files := http.FileServer(http.FS(web))
+	mux.Handle("GET /", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" || strings.HasPrefix(r.URL.Path, "/notes/") {
+			index, err := assets.ReadFile("dist/index.html")
+			if err != nil {
+				http.Error(w, "Frontend unavailable", 500)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(index)
+			return
+		}
+		files.ServeHTTP(w, r)
+	}))
 	server := &http.Server{Addr: ":8080", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")

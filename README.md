@@ -53,3 +53,13 @@ The public API is intentionally small:
 - `GET /health/ready`: database and schema readiness.
 
 Frontend requests use relative URLs so the same image works at a domain root or Rukie's development path prefix. No runtime endpoint injects build failures or database faults; validation owns such interventions.
+
+## Public URLs and built frontend
+
+The container always serves a Vite production build. There is no development server or hot reload, including when `RUKIE_APP_ENV=development`.
+
+The manifest declares named ports and `health_path`. VM-plane injects `RUKIE_PUBLIC_URLS` (a JSON map from endpoint names to absolute browser-visible URLs) and `RUKIE_APP_ENV` (`production` by default). The same image can run behind different hostnames, HTTP/HTTPS, and external ports without rebuilding. The backend exposes only these public settings at `/api/config`; database and blob credentials stay server-side.
+
+Frontend API calls and assets use the endpoint root. `/notes/<id>` supports direct navigation and refresh. “Remember this browser” is a display preference, **not authentication**: it exercises a host-only HttpOnly cookie and an absolute redirect to the assigned URL. Cookies use Secure when that URL is HTTPS.
+
+Run `docker compose up --build` to build both frontend and backend locally. Standalone Compose defaults to `http://localhost:8080/`; set `PUBLIC_APP_URL` for a different external address (the default follows `PORT`). Production deployment obtains it automatically from VM-plane. Endpoint path prefixes are not supported.

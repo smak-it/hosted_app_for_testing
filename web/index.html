@@ -11,6 +11,9 @@
   <main>
     <header><div><p class="eyebrow">A Rukie hosted app</p><h1>Notes</h1></div><span id="version" class="version">Loading release…</span></header>
     <p id="welcome" class="intro">A little space for things worth keeping.</p>
+    <p id="environment"></p>
+    <p><a href="/session/start">Remember this browser</a> · <span id="session-status">Checking browser preference…</span></p>
+    <p id="detail" hidden>Viewing one note. <a id="all-notes" href="/">All notes</a></p>
     <div class="workspace">
       <section class="editor" aria-labelledby="editor-title">
         <h2 id="editor-title">New note</h2>
@@ -30,6 +33,6 @@
     </div>
     <footer>Notes live in PostgreSQL; attachments live in blob storage. Both survive app replacement.</footer>
   </main>
-  <template id="note-template"><article><p class="note-body"></p><section class="attachments" aria-label="Attachments"></section><div class="note-footer"><time></time><div><button class="secondary edit">Edit</button><button class="secondary delete">Delete</button></div></div></article></template>
+  <template id="note-template"><article><p class="note-body"></p><a class="open-note">Open note</a><section class="attachments" aria-label="Attachments"></section><div class="note-footer"><time></time><div><button class="secondary edit">Edit</button><button class="secondary delete">Delete</button></div></div></article></template>
 </body>
 </html>

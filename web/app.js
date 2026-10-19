@@ -13,7 +13,7 @@ function setBusy(value) {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(new URL(path, window.location.href), {
+  const response = await fetch(new URL(path, window.location.origin + "/"), {
     ...options,
     headers: options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' },
     signal: AbortSignal.timeout(10000),
@@ -43,12 +43,17 @@ function resetEditor() {
 let loadRevision = 0;
 async function loadNotes() {
   const revision = ++loadRevision;
-  const notes = await request('api/notes');
+  const match = /^\/notes\/(\d+)\/?$/.exec(window.location.pathname);
+  const notes = match ? [await request(`api/notes/${match[1]}`)] : await request('api/notes');
+  document.querySelector('#detail').hidden = !match;
   const list = document.querySelector('#notes');
   const contents = document.createDocumentFragment();
   for (const note of notes) {
     const fragment = document.querySelector('#note-template').content.cloneNode(true);
     fragment.querySelector('.note-body').textContent = note.body;
+    const open = fragment.querySelector('.open-note');
+    open.href = `/notes/${note.id}`;
+    open.addEventListener('click', (event) => { event.preventDefault(); navigateNotes(open.href); });
     const time = fragment.querySelector('time');
     time.dateTime = note.updated_at;
     time.textContent = new Date(note.updated_at).toLocaleString();
@@ -65,6 +70,7 @@ async function loadNotes() {
       try {
         await request(`api/notes/${note.id}`, { method: 'DELETE' });
         if (editing === note.id) resetEditor();
+        if (/^\/notes\/\d+\/?$/.test(window.location.pathname)) history.replaceState({}, '', '/');
         await loadNotes();
         status.textContent = 'Note deleted.';
       } catch (failure) {
@@ -99,7 +105,19 @@ form.addEventListener('submit', (event) => {
 });
 cancel.addEventListener('click', resetEditor);
 document.querySelector('#refresh').addEventListener('click', () => action(loadNotes));
+function navigateNotes(path) {
+  history.pushState({}, '', path);
+  document.querySelector('#notes').replaceChildren();
+  resetEditor();
+  action(loadNotes);
+}
+document.querySelector('#all-notes').addEventListener('click', (event) => { event.preventDefault(); navigateNotes('/'); });
+window.addEventListener('popstate', () => { document.querySelector('#notes').replaceChildren(); resetEditor(); action(loadNotes); });
 action(async () => {
+  const config = await request('api/config');
+  document.querySelector('#environment').textContent = `Environment: ${config.environment}`;
+  const session = await request('api/session');
+  document.querySelector('#session-status').textContent = session.remembered ? 'This browser is remembered.' : 'This browser is not remembered.';
   const info = await request('api/info');
   document.querySelector('#version').textContent = `Release ${info.version}`;
   if (info.message) document.querySelector('#welcome').textContent = info.message;
