@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -43,6 +46,18 @@ func registerPublicConfig(mux *http.ServeMux) error {
 	mux.HandleFunc("GET /api/session", func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("notes_demo")
 		jsonResponse(w, 200, map[string]bool{"remembered": err == nil && cookie.Value == "remembered"})
+	})
+	// Validation proof only: demonstrate runtime secret injection without returning
+	// the value. This is not an authentication endpoint.
+	secret, configured := os.LookupEnv("TESTING_APP_SECRET")
+	mux.HandleFunc("GET /api/secret-proof", func(w http.ResponseWriter, r *http.Request) {
+		proof := ""
+		if configured {
+			mac := hmac.New(sha256.New, []byte(secret))
+			_, _ = mac.Write([]byte("hosted-app-validation"))
+			proof = hex.EncodeToString(mac.Sum(nil))
+		}
+		jsonResponse(w, 200, map[string]any{"configured": configured, "proof": proof})
 	})
 	return nil
 }

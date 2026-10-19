@@ -63,3 +63,5 @@ The manifest declares named ports and `health_path`. VM-plane injects `RUKIE_PUB
 Frontend API calls and assets use the endpoint root. `/notes/<id>` supports direct navigation and refresh. “Remember this browser” is a display preference, **not authentication**: it exercises a host-only HttpOnly cookie and an absolute redirect to the assigned URL. Cookies use Secure when that URL is HTTPS.
 
 Run `docker compose up --build` to build both frontend and backend locally. Standalone Compose defaults to `http://localhost:8080/`; set `PUBLIC_APP_URL` for a different external address (the default follows `PORT`). Production deployment obtains it automatically from VM-plane. Endpoint path prefixes are not supported.
+
+`TESTING_APP_SECRET` is an optional runtime secret. `/api/secret-proof` returns whether it is configured and an HMAC of a fixed validation message, never the secret value. Rukie's validation compares the proof across updates and rollback. This endpoint is a testing fixture, not authentication; do not configure real credentials for it. An empty value is configured, while an absent variable is not.
