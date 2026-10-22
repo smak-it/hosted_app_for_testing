@@ -89,8 +89,7 @@ references. The example reads text attachments (up to 4 KiB each) from its own
 blob storage and includes their names/content in the new note.
 
 The app stores the invocation receipt and note in one PostgreSQL transaction.
-Repeated IDs return the original result; different content with the same ID
-returns 409. Receipts survive app replacements. Rukie owns transport retries,
+Repeated IDs return the original result, even if the retry content changes. Receipts survive app replacements. Rukie owns transport retries,
 while the app is responsible for idempotency. External side effects need their
 own idempotency mechanism.
 

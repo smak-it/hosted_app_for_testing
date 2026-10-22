@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -59,16 +57,9 @@ func (a application) invoke(w http.ResponseWriter, r *http.Request) {
 		a.failure(w, err)
 		return
 	}
-	sum := sha256.Sum256(data)
-	digest := hex.EncodeToString(sum[:])
-	var existingDigest string
 	var result json.RawMessage
-	err = tx.QueryRow(ctx, "SELECT request_digest,result FROM rukie_invocations WHERE id=$1", input.InvocationID).Scan(&existingDigest, &result)
+	err = tx.QueryRow(ctx, "SELECT result FROM rukie_invocations WHERE id=$1", input.InvocationID).Scan(&result)
 	if err == nil {
-		if existingDigest != digest {
-			jsonResponse(w, 409, map[string]string{"error": "Invocation ID already used with different content"})
-			return
-		}
 		jsonResponse(w, 200, result)
 		return
 	}
@@ -105,7 +96,7 @@ func (a application) invoke(w http.ResponseWriter, r *http.Request) {
 		a.failure(w, err)
 		return
 	}
-	if _, err = tx.Exec(ctx, "INSERT INTO rukie_invocations(id,request_digest,result) VALUES($1,$2,$3)", input.InvocationID, digest, result); err != nil {
+	if _, err = tx.Exec(ctx, "INSERT INTO rukie_invocations(id,result) VALUES($1,$2)", input.InvocationID, result); err != nil {
 		a.failure(w, err)
 		return
 	}
