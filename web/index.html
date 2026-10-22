@@ -31,6 +31,17 @@
         <div id="notes"></div>
       </section>
     </div>
+    <section class="editor" aria-labelledby="messaging-title">
+      <h2 id="messaging-title">Send to Rukie</h2>
+      <form id="messaging-form">
+        <label for="conversation">Conversation ID</label><input id="conversation" name="conversation" placeholder="Uses REPORT_CONVERSATION_ID when omitted">
+        <label for="message">Message</label><textarea id="message" name="message" rows="3" required maxlength="64000"></textarea>
+        <label for="blob-key">Attachment blob key (optional)</label><input id="blob-key" name="blob-key">
+        <label for="attachment-name">Attachment name</label><input id="attachment-name" name="attachment-name" placeholder="report.txt">
+        <button type="submit">Send to Rukie</button>
+      </form>
+      <p id="messaging-status" role="status" aria-live="polite"></p>
+    </section>
     <footer>Notes live in PostgreSQL; attachments live in blob storage. Both survive app replacement.</footer>
   </main>
   <template id="note-template"><article><p class="note-body"></p><a class="open-note">Open note</a><section class="attachments" aria-label="Attachments"></section><div class="note-footer"><time></time><div><button class="secondary edit">Edit</button><button class="secondary delete">Delete</button></div></div></article></template>

@@ -63,3 +63,19 @@ The manifest declares named ports and `health_path`. VM-plane injects `RUKIE_PUB
 Frontend API calls and assets use the endpoint root. `/notes/<id>` supports direct navigation and refresh. “Remember this browser” is a display preference, **not authentication**: it exercises a host-only HttpOnly cookie and an absolute redirect to the assigned URL. Cookies use Secure when that URL is HTTPS.
 
 Run `docker compose up --build` to build both frontend and backend locally. Standalone Compose defaults to `http://localhost:8080/`; set `PUBLIC_APP_URL` for a different external address (the default follows `PORT`). Production deployment obtains it automatically from VM-plane. Endpoint path prefixes are not supported.
+
+## Sending messages to Rukie
+
+Deploy with `message_access.room_ids` for synthetic validation rooms. The platform
+injects `RUKIE_API_URL`; set optional `REPORT_CONVERSATION_ID` through ordinary
+configuration. The **Send to Rukie** form sends text and an optional app-owned blob
+key. Use a key returned by the notes attachment upload. Rukie copies the bytes into
+conversation storage, so deleting the original attachment does not remove the
+message attachment.
+
+The form keeps the same request ID when retrying unchanged content. A successful
+response means Rukie committed the message. Changing the form starts a new request.
+Messages may mention agents using Rukie's normal mention syntax.
+
+This unauthenticated testing app exposes its send form publicly. Use only synthetic
+rooms and data; production apps must authorize who can invoke their messaging.

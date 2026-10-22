@@ -212,6 +212,7 @@ func run(ctx context.Context) error {
 	}
 	a := application{db: db, blobs: blobs}
 	mux := http.NewServeMux()
+	registerMessaging(mux)
 	if err := registerPublicConfig(mux); err != nil {
 		return err
 	}

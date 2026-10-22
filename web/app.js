@@ -1,3 +1,4 @@
+import './messaging.js';
 import { renderAttachments } from './attachments.js';
 const form = document.querySelector('#note-form');
 const body = document.querySelector('#body');
