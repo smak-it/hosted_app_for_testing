@@ -38,7 +38,7 @@ export async function renderAttachments(section, noteID, { request, action, setB
     event.preventDefault();
     action(async () => {
       const file = input.files[0];
-      if (!file || file.size > 8 * 1024 * 1024) throw new Error('Choose a file of at most 8 MiB.');
+      if (!file || file.size > 32 * 1024 * 1024) throw new Error('Choose a file of at most 32 MiB.');
       const body = new FormData();
       body.append('file', file);
       setBusy(true);

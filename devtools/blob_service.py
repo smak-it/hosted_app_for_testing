@@ -18,7 +18,7 @@ class Handler(BaseHTTPRequestHandler):
         path = ROOT / match[1]
         if self.command == "PUT":
             size = int(self.headers.get("Content-Length", "0"))
-            if size <= 0 or size > 8 * 1024 * 1024:
+            if size <= 0 or size > 32 * 1024 * 1024:
                 self.send_error(413)
                 return
             path.write_bytes(self.rfile.read(size))
