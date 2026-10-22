@@ -18,7 +18,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const maxAttachmentBytes = 8 << 20
+const maxAttachmentBytes = 32 << 20
 
 type blobStorage struct {
 	endpoint, token string
@@ -86,7 +86,7 @@ func (a application) upload(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxAttachmentBytes+65536)
 	if err = r.ParseMultipartForm(maxAttachmentBytes); err != nil {
-		jsonResponse(w, 400, map[string]string{"error": "Upload one file, at most 8 MiB."})
+		jsonResponse(w, 400, map[string]string{"error": "Upload one file, at most 32 MiB."})
 		return
 	}
 	defer r.MultipartForm.RemoveAll()
@@ -98,7 +98,7 @@ func (a application) upload(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 	data, err := io.ReadAll(io.LimitReader(file, maxAttachmentBytes+1))
 	if err != nil || len(data) > maxAttachmentBytes {
-		jsonResponse(w, 413, map[string]string{"error": "File exceeds 8 MiB."})
+		jsonResponse(w, 413, map[string]string{"error": "File exceeds 32 MiB."})
 		return
 	}
 	key := make([]byte, 16)

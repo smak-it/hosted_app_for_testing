@@ -29,7 +29,7 @@ Runtime bindings:
 
 Startup applies the SQL files in `migrations` transactionally under a PostgreSQL advisory lock, records schema version 2, and preserves existing notes. `/health/ready` checks database connectivity and schema initialization.
 
-Attachments are limited to 8 MiB. PostgreSQL stores metadata and Azure Blob Storage stores the bytes. The backend mediates downloads; browser code never receives storage credentials. Blob and PostgreSQL writes are not one transaction: an interrupted upload or failed byte cleanup after metadata deletion can leave an unreferenced blob, which app deletion removes with the private container. Deletion commits metadata first so a database failure cannot leave a visible attachment whose bytes were already destroyed. This reference workload does not provide an orphan collector.
+Attachments are limited to 32 MiB. PostgreSQL stores metadata and Azure Blob Storage stores the bytes. The backend mediates downloads; browser code never receives storage credentials. Blob and PostgreSQL writes are not one transaction: an interrupted upload or failed byte cleanup after metadata deletion can leave an unreferenced blob, which app deletion removes with the private container. Deletion commits metadata first so a database failure cannot leave a visible attachment whose bytes were already destroyed. This reference workload does not provide an orphan collector.
 
 `VERSION` is embedded into the application image and displayed in the UI. Changing it and building another release makes replacement and rollback visible without changing the schema. Requests and pooled database connections are bounded. SIGTERM drains HTTP requests before closing the pool.
 
