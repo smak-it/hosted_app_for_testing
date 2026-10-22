@@ -79,3 +79,22 @@ Messages may mention agents using Rukie's normal mention syntax.
 
 This unauthenticated testing app exposes its send form publicly. Use only synthetic
 rooms and data; production apps must authorize who can invoke their messaging.
+
+### Rukie → app invocations
+
+The manifest declares a private handler at `127.0.0.1:8081/rukie/invoke`; it is
+not registered on the public web server. Use `invoke_hosted_app` with
+`body: {"action":"create_note","text":"Hello from Rukie"}` and optional file
+references. The example reads text attachments (up to 4 KiB each) from its own
+blob storage and includes their names/content in the new note.
+
+The app stores the invocation receipt and note in one PostgreSQL transaction.
+Repeated IDs return the original result; different content with the same ID
+returns 409. Receipts survive app replacements. Rukie owns transport retries,
+while the app is responsible for idempotency. External side effects need their
+own idempotency mechanism.
+
+For validation, add `"lose_response_once":true` to the body. The handler commits
+the note and returns 503 the first time. Retrying the same invocation returns the
+saved result without another note. This fault is specific to this testing app.
+Copied files belong to the app and remain until the app removes them or is deleted.
