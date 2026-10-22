@@ -85,10 +85,14 @@ rooms and data; production apps must authorize who can invoke their messaging.
 The manifest declares a private handler at `127.0.0.1:8081/rukie/invoke`; it is
 not registered on the public web server. Use `invoke_hosted_app` with
 `body: {"action":"create_note","text":"Hello from Rukie"}` and optional file
-references. The example reads text attachments (up to 4 KiB each) from its own
-blob storage and includes their names/content in the new note.
+references. The handler links the supplied blobs as downloadable note attachments
+(up to 50 files of 32 MiB each, including images). It preserves their filenames and
+original bytes, detects their content type, and leaves the note text unchanged.
+Repeated references to one file create one attachment. Deleting a note attachment
+removes its blob through the same path as browser uploads.
 
-The app stores the invocation receipt and note in one PostgreSQL transaction.
+The app stores the invocation receipt, note and attachment metadata in one
+PostgreSQL transaction. A failed import publishes no partial note or attachments.
 Repeated IDs return the original result, even if the retry content changes. Receipts survive app replacements. Rukie owns transport retries,
 while the app is responsible for idempotency. External side effects need their
 own idempotency mechanism.

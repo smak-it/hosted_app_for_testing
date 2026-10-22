@@ -53,12 +53,18 @@ func (a application) invoke(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(ctx)
 	// Serialize duplicate attempts. The receipt and note commit in one transaction.
-	if _, err = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(hashtextextended($1,0))", input.InvocationID); err != nil {
+	if _, err = tx.Exec(ctx, `
+SELECT pg_advisory_xact_lock(hashtextextended($1, 0))
+`, input.InvocationID); err != nil {
 		a.failure(w, err)
 		return
 	}
 	var result json.RawMessage
-	err = tx.QueryRow(ctx, "SELECT result FROM rukie_invocations WHERE id=$1", input.InvocationID).Scan(&result)
+	err = tx.QueryRow(ctx, `
+SELECT result
+FROM rukie_invocations
+WHERE id = $1
+`, input.InvocationID).Scan(&result)
 	if err == nil {
 		jsonResponse(w, 200, result)
 		return
@@ -67,36 +73,67 @@ func (a application) invoke(w http.ResponseWriter, r *http.Request) {
 		a.failure(w, err)
 		return
 	}
-	body := input.Body.Text
-	for _, attachment := range input.Attachments {
-		response, err := a.blobs.request(ctx, http.MethodGet, attachment.BlobKey, nil)
-		if err != nil {
-			a.failure(w, err)
-			return
-		}
-		content, err := io.ReadAll(io.LimitReader(response.Body, 4097))
-		response.Body.Close()
-		if err != nil {
-			a.failure(w, err)
-			return
-		}
-		if len(content) > 4096 {
-			jsonResponse(w, 400, map[string]string{"error": "Example handler accepts text attachments up to 4 KiB"})
-			return
-		}
-		body += "\n" + attachment.Name + ": " + string(content)
+	if len(input.Attachments) > 50 {
+		jsonResponse(w, 400, map[string]string{"error": "At most 50 attachments are allowed"})
+		return
 	}
 	var created note
-	if err = tx.QueryRow(ctx, "INSERT INTO notes(body) VALUES($1) RETURNING id,body,updated_at", body).Scan(&created.ID, &created.Body, &created.UpdatedAt); err != nil {
+	if err = tx.QueryRow(ctx, `
+INSERT INTO notes (body)
+VALUES ($1)
+RETURNING id, body, updated_at
+`, input.Body.Text).Scan(&created.ID, &created.Body, &created.UpdatedAt); err != nil {
 		a.failure(w, err)
 		return
+	}
+	seen := make(map[string]bool)
+	for _, file := range input.Attachments {
+		// Rukie supplies immutable blob keys scoped to this invocation and file.
+		// Repeated references to the same file become one note attachment.
+		if seen[file.BlobKey] {
+			continue
+		}
+		seen[file.BlobKey] = true
+		response, err := a.blobs.request(ctx, http.MethodGet, file.BlobKey, nil)
+		if err != nil {
+			a.failure(w, err)
+			return
+		}
+		// Sniff a small prefix and count the rest without buffering a whole file.
+		header, readErr := io.ReadAll(io.LimitReader(response.Body, 512))
+		var remaining int64
+		if readErr == nil {
+			remaining, readErr = io.Copy(io.Discard, io.LimitReader(response.Body, int64(maxAttachmentBytes+1-len(header))))
+		}
+		response.Body.Close()
+		if readErr != nil {
+			a.failure(w, readErr)
+			return
+		}
+		size := int64(len(header)) + remaining
+		if size > maxAttachmentBytes {
+			jsonResponse(w, 413, map[string]string{"error": "File exceeds 32 MiB"})
+			return
+		}
+		// The existing attachment ID is also its blob key, so normal downloads
+		// and deletion work without copying bytes or adding another storage model.
+		if _, err = tx.Exec(ctx, `
+INSERT INTO attachments (id, note_id, filename, content_type, size)
+VALUES ($1, $2, $3, $4, $5)
+`, file.BlobKey, created.ID, file.Name, http.DetectContentType(header), size); err != nil {
+			a.failure(w, err)
+			return
+		}
 	}
 	result, err = json.Marshal(created)
 	if err != nil {
 		a.failure(w, err)
 		return
 	}
-	if _, err = tx.Exec(ctx, "INSERT INTO rukie_invocations(id,result) VALUES($1,$2)", input.InvocationID, result); err != nil {
+	if _, err = tx.Exec(ctx, `
+INSERT INTO rukie_invocations (id, result)
+VALUES ($1, $2)
+`, input.InvocationID, result); err != nil {
 		a.failure(w, err)
 		return
 	}
