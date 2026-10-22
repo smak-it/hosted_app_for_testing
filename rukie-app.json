@@ -11,5 +11,9 @@
   "databases": [
     "main"
   ],
-  "blob_storage": true
+  "blob_storage": true,
+  "rukie_api": {
+    "port": 8081,
+    "path": "/rukie/invoke"
+  }
 }

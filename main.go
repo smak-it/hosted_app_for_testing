@@ -181,6 +181,13 @@ func migrate(ctx context.Context, db *pgxpool.Pool) error {
 	if _, err = tx.Exec(ctx, string(attachments)); err != nil {
 		return err
 	}
+	invocations, err := assets.ReadFile("migrations/003_invocations.sql")
+	if err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, string(invocations)); err != nil {
+		return err
+	}
 	return tx.Commit(ctx)
 }
 
@@ -211,7 +218,13 @@ func run(ctx context.Context) error {
 		return errors.New("platform blob storage binding is required")
 	}
 	a := application{db: db, blobs: blobs}
+	private, err := a.startInvocations()
+	if err != nil {
+		return err
+	}
+	defer private.Close()
 	mux := http.NewServeMux()
+	registerMessaging(mux)
 	if err := registerPublicConfig(mux); err != nil {
 		return err
 	}
