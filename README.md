@@ -101,3 +101,16 @@ For validation, add `"lose_response_once":true` to the body. The handler commits
 the note and returns 503 the first time. Retrying the same invocation returns the
 saved result without another note. This fault is specific to this testing app.
 Copied files belong to the app and remain until the app removes them or is deleted.
+
+## Publish a VM-built release
+
+Build on an ordinary Rukie development VM:
+
+```sh
+./scripts/build-release.sh hosted-app-for-testing:dev
+```
+
+The helper embeds runtime settings and concise guidance in the image. Rebuilding
+on the same VM reuses Docker's cache. Use `publish_app_release` with that VM ID
+and local image tag, then deploy the ready release. The build needs no platform
+registry credentials. Publication requires the updated VM-plane and VM daemon.
