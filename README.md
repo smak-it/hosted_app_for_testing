@@ -107,10 +107,12 @@ Copied files belong to the app and remain until the app removes them or is delet
 Build on an ordinary Rukie development VM:
 
 ```sh
-./scripts/build-release.sh hosted-app-for-testing:dev
+docker build --platform linux/amd64 -t hosted-app-for-testing:dev .
 ```
 
-The helper embeds runtime settings and concise guidance in the image. Rebuilding
-on the same VM reuses Docker's cache. Use `publish_app_release` with that VM ID
-and local image tag, then deploy the ready release. The build needs no platform
-registry credentials. Publication requires the updated VM-plane and VM daemon.
+Rebuilding on the same VM reuses Docker's cache. Use `publish_app_release` with
+that VM ID, the local image tag, and `repo_path` set to this repository's absolute
+directory on the VM. Publication captures `rukie-app.json` and the optional guidance
+files alongside the image. Deploy the resulting ready release. The build needs no
+platform registry credentials. The central `how_to("hosted_apps")` guide explains
+the workflow; publication requires the updated VM-plane and VM daemon.
