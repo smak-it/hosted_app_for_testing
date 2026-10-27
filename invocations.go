@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -16,7 +18,7 @@ import (
 // Container deployment uses host networking; local Compose does not publish it.
 func (a application) startInvocations() (*http.Server, error) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /rukie/invoke", a.invoke)
+	mux.HandleFunc("POST /rukie", a.privateRequest)
 	listener, err := net.Listen("tcp", "127.0.0.1:8081")
 	if err != nil {
 		return nil, err
@@ -26,22 +28,57 @@ func (a application) startInvocations() (*http.Server, error) {
 	return server, nil
 }
 
-func (a application) invoke(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		InvocationID string `json:"invocation_id"`
-		Body         struct {
-			Action           string `json:"action"`
-			Text             string `json:"text"`
-			LoseResponseOnce bool   `json:"lose_response_once,omitempty"`
-		} `json:"body"`
-		Attachments []struct {
-			Name    string `json:"name"`
-			BlobKey string `json:"blob_key"`
-		} `json:"attachments,omitempty"`
+type actionRequest struct {
+	Operation   string                     `json:"operation"`
+	Action      string                     `json:"action"`
+	Body        map[string]json.RawMessage `json:"body"`
+	Attachments []attachmentMetadata       `json:"attachments"`
+}
+type attachmentMetadata struct {
+	Name        string `json:"name"`
+	SizeBytes   int64  `json:"size_bytes"`
+	ContentType string `json:"content_type"`
+}
+type privateInvocation struct {
+	InvocationID string        `json:"invocation_id"`
+	Body         actionRequest `json:"body"`
+	Attachments  []struct {
+		Name    string `json:"name"`
+		BlobKey string `json:"blob_key"`
+	} `json:"attachments"`
+}
+
+func (a application) privateRequest(w http.ResponseWriter, r *http.Request) {
+	var input privateInvocation
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 128*1024)).Decode(&input); err != nil {
+		jsonResponse(w, 400, map[string]string{"error": "Invalid request"})
+		return
 	}
-	data, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 128*1024))
-	if err != nil || json.Unmarshal(data, &input) != nil || input.InvocationID == "" || input.Body.Action != "create_note" || input.Body.Text == "" {
-		jsonResponse(w, 400, map[string]string{"error": "Expected invocation_id and body {action: create_note, text: ...}"})
+	switch input.Body.Operation {
+	case "list":
+		a.actions(w, r)
+	case "describe":
+		a.actionHelp(w, r, input.Body.Action)
+	case "validate":
+		a.validateAction(w, input.Body)
+	case "invoke":
+		if input.Body.Action == "list_notes" {
+			a.listAction(w, r)
+			return
+		}
+		a.invoke(w, r, input)
+	default:
+		jsonResponse(w, 400, map[string]string{"error": "Unknown operation"})
+	}
+}
+func (a application) invoke(w http.ResponseWriter, r *http.Request, input privateInvocation) {
+	var body struct {
+		Text             string `json:"text"`
+		LoseResponseOnce bool   `json:"lose_response_once"`
+	}
+	data, _ := json.Marshal(input.Body.Body)
+	if json.Unmarshal(data, &body) != nil || input.InvocationID == "" || input.Body.Action != "create_note" || body.Text == "" {
+		jsonResponse(w, 400, map[string]string{"error": "Expected invocation_id and body {text: ...}"})
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
@@ -82,7 +119,7 @@ WHERE id = $1
 INSERT INTO notes (body)
 VALUES ($1)
 RETURNING id, body, updated_at
-`, input.Body.Text).Scan(&created.ID, &created.Body, &created.UpdatedAt); err != nil {
+`, body.Text).Scan(&created.ID, &created.Body, &created.UpdatedAt); err != nil {
 		a.failure(w, err)
 		return
 	}
@@ -125,7 +162,11 @@ VALUES ($1, $2, $3, $4, $5)
 			return
 		}
 	}
-	result, err = json.Marshal(created)
+	quoted, _ := json.Marshal(created.Body)
+	result, err = json.Marshal(map[string]any{
+		"result":            created,
+		"response_markdown": fmt.Sprintf("Created a note with %d attachment(s).\n\n    %s", len(seen), quoted),
+	})
 	if err != nil {
 		a.failure(w, err)
 		return
@@ -142,9 +183,26 @@ VALUES ($1, $2)
 		return
 	}
 	// Explicit validation action: commit the work but lose its first successful reply.
-	if input.Body.LoseResponseOnce {
+	if body.LoseResponseOnce {
 		jsonResponse(w, 503, map[string]string{"error": "Validation: successful response lost; retry the same invocation"})
 		return
 	}
 	jsonResponse(w, 200, result)
+}
+
+func (a application) listAction(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	notes, err := a.readNotes(ctx)
+	if err != nil {
+		a.failure(w, err)
+		return
+	}
+	var markdown strings.Builder
+	fmt.Fprintf(&markdown, "%d notes.\n", len(notes))
+	for _, note := range notes {
+		text, _ := json.Marshal(note.Body)
+		fmt.Fprintf(&markdown, "\n    %s\n", text)
+	}
+	jsonResponse(w, 200, map[string]any{"result": notes, "response_markdown": markdown.String()})
 }

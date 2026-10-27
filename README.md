@@ -82,9 +82,9 @@ rooms and data; production apps must authorize who can invoke their messaging.
 
 ### Rukie → app invocations
 
-The manifest declares a private handler at `127.0.0.1:8081/rukie/invoke`; it is
+The manifest declares a private handler at `127.0.0.1:8081/rukie`; it is
 not registered on the public web server. Use `invoke_hosted_app` with
-`body: {"action":"create_note","text":"Hello from Rukie"}` and optional file
+`action: "create_note"`, `body: {"text":"Hello from Rukie"}` and optional file
 references. The handler links the supplied blobs as downloadable note attachments
 (up to 50 files of 32 MiB each, including images). It preserves their filenames and
 original bytes, detects their content type, and leaves the note text unchanged.
@@ -101,3 +101,18 @@ For validation, add `"lose_response_once":true` to the body. The handler commits
 the note and returns 503 the first time. Retrying the same invocation returns the
 saved result without another note. This fault is specific to this testing app.
 Copied files belong to the app and remain until the app removes them or is deleted.
+
+### Private action API
+
+The private handler accepts `POST /rukie` using the existing Rukie invocation
+transport. Requests have `{invocation_id, body: {operation, action?, body?, attachments?}, attachments?}`.
+Body operations are `list` (catalog), `describe` (action help), `validate` (preview)
+and `invoke` (execute). Validation attachments contain only `name`, `size_bytes`
+and `content_type`; execution attachments are outer-envelope `name`/`blob_key`
+references. Validation returns `{request_markdown, errors: []}` without changes.
+Rukie automatically executes declared read-only actions; writes require approval.
+Retries of execution reuse the same invocation ID.
+
+Validation returns `request_markdown` with the action and supplied values for approval.
+Execution returns `{result, response_markdown}` with structured data and its readable
+presentation. Writes retain both in the same idempotency receipt as their effects.
