@@ -1,4 +1,28 @@
 services:
+  checks:
+    profiles: [checks]
+    build:
+      context: .
+      target: checks
+    environment:
+      TEST_DATABASE_URL: postgres://notes:notes@checks-postgres:5432/notes_checks?sslmode=disable
+    depends_on:
+      checks-postgres:
+        condition: service_healthy
+  checks-postgres:
+    profiles: [checks]
+    image: postgres:18
+    environment:
+      POSTGRES_USER: notes
+      POSTGRES_PASSWORD: notes
+      POSTGRES_DB: notes_checks
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notes -d notes_checks"]
+      interval: 1s
+      timeout: 2s
+      retries: 30
   app:
     build: .
     ports:

@@ -15,6 +15,9 @@ COPY migrations ./migrations
 COPY --from=frontend /src/dist ./dist
 RUN CGO_ENABLED=0 go build -trimpath -o /notes .
 
+FROM build AS checks
+CMD ["go", "test", "-v", "./..."]
+
 FROM alpine:3.22
 WORKDIR /app
 COPY VERSION ./

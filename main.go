@@ -48,20 +48,24 @@ func (a application) failure(w http.ResponseWriter, err error) {
 func (a application) list(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
+	notes, err := a.readNotes(ctx)
+	if err != nil {
+		a.failure(w, err)
+		return
+	}
+	jsonResponse(w, 200, notes)
+}
+
+func (a application) readNotes(ctx context.Context) ([]note, error) {
 	rows, err := a.db.Query(ctx, "SELECT id, body, updated_at FROM notes ORDER BY id DESC LIMIT 200")
 	if err != nil {
-		a.failure(w, err)
-		return
+		return nil, err
 	}
 	notes, err := pgx.CollectRows(rows, pgx.RowToStructByName[note])
-	if err != nil {
-		a.failure(w, err)
-		return
-	}
 	if notes == nil {
 		notes = []note{}
 	}
-	jsonResponse(w, 200, notes)
+	return notes, err
 }
 
 func (a application) save(w http.ResponseWriter, r *http.Request) {
