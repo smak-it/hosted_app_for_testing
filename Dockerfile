@@ -1,27 +1,16 @@
-FROM oven/bun:1.4.2 AS frontend
-WORKDIR /src
+FROM oven/bun:1.4.2 AS build
+WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
-COPY vite.config.js ./
-COPY web ./web
-RUN bun run build
+COPY . .
+RUN bun run check && bun run lint && bun run build
 
-FROM golang:1.25-alpine AS build
-WORKDIR /src
-COPY go.mod go.sum ./
-RUN go mod download
-COPY *.go ./
-COPY migrations ./migrations
-COPY --from=frontend /src/dist ./dist
-RUN CGO_ENABLED=0 go build -trimpath -o /notes .
-
-FROM build AS checks
-CMD ["go", "test", "-v", "./..."]
-
-FROM alpine:3.22
+FROM oven/bun:1.4.2-slim
 WORKDIR /app
-COPY VERSION ./
-COPY --from=build /notes /notes
-USER 65532:65532
+COPY --from=build --chown=bun:bun /app/dist ./dist
+COPY --from=build --chown=bun:bun /app/backend ./backend
+COPY --from=build --chown=bun:bun /app/shared ./shared
+COPY --from=build --chown=bun:bun /app/VERSION ./VERSION
+USER bun
 EXPOSE 8080
-ENTRYPOINT ["/notes"]
+CMD ["bun", "backend/main.ts"]
