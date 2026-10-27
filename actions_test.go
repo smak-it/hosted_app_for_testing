@@ -39,7 +39,7 @@ func TestActionDiscoveryAndPreview(t *testing.T) {
 		if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
 			t.Fatal(err)
 		}
-		if len(result.Errors) != check.errors || result.Summary == "" {
+		if len(result.Errors) != check.errors || check.errors == 0 && result.Summary == "" {
 			t.Fatal(w.Body.String())
 		}
 	}

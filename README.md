@@ -116,3 +116,21 @@ Retries of execution reuse the same invocation ID.
 Validation returns `request_markdown` with the action and supplied values for approval.
 Execution returns `{result, response_markdown}` with structured data and its readable
 presentation. Writes retain both in the same idempotency receipt as their effects.
+
+### Adding an action
+
+Register it in `actions.go` with `defineAction`: name, description, read-only flag,
+help, validator, request formatter, execution handler and result formatter. The
+result formatter receives the handler's result type. The shared dispatcher builds
+the catalog, help, validation and execution envelopes. Missing callbacks or blank
+help fail startup; blank generated Markdown fails the request.
+
+Write handlers use the supplied transaction. Response formatting and receipt storage
+happen before commit, so a formatting failure rolls back the write. A retry replays
+the stored response without running either the handler or formatter again.
+
+Add an executable example to `TestEveryActionContract`. It enumerates the real
+catalog and calls every action through `/rukie`; missing examples fail the test.
+Run `docker compose --profile checks run --build --rm checks` for unit and contract
+tests against an isolated, disposable PostgreSQL service. Stop that service with
+`docker compose --profile checks stop checks-postgres` when finished.
