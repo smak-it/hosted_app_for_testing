@@ -3,92 +3,166 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Notes · Hosted app</title>
+    <title>Notes</title>
     <link rel="stylesheet" href="/src/style.css" />
     <script type="module" src="/src/app.ts"></script>
   </head>
   <body>
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="Notes home"
+        ><span class="brand-mark" aria-hidden="true">N</span> Notes</a
+      >
+      <nav aria-label="App tools">
+        <button class="button secondary" id="open-messaging">Send to Rukie</button>
+        <button class="button quiet" id="open-testing">Testing tools</button>
+      </nav>
+    </header>
     <main>
-      <header>
+      <div class="page-heading">
         <div>
-          <p class="eyebrow">A Rukie hosted app</p>
-          <h1>Notes</h1>
+          <h1>Your notes</h1>
+          <p id="welcome">A place for notes and the files that go with them.</p>
         </div>
-        <span id="version" class="version">Loading release…</span>
-      </header>
-      <p id="welcome" class="intro">A little space for things worth keeping.</p>
-      <p id="environment"></p>
-      <p>
-        <a href="/session/start">Remember this browser</a> ·
-        <span id="session-status">Checking browser preference…</span>
-      </p>
-      <p id="detail" hidden>Viewing one note. <a id="all-notes" href="/">All notes</a></p>
-      <div class="workspace">
-        <section class="editor" aria-labelledby="editor-title">
-          <h2 id="editor-title">New note</h2>
-          <form id="note-form">
-            <label for="body">Note</label>
+        <button class="button primary" id="new-note">
+          <span aria-hidden="true">＋</span> New note
+        </button>
+      </div>
+      <p id="status" role="status" aria-live="polite" class="status"></p>
+      <div id="error" class="notice error" role="alert" hidden></div>
+      <div class="workspace" id="workspace">
+        <section class="notes-pane" aria-label="Notes">
+          <div class="list-heading">
+            <span id="note-count">Loading notes…</span
+            ><button class="button quiet small" id="refresh">Refresh</button>
+          </div>
+          <div id="notes" class="note-list"></div>
+          <div id="empty" class="empty-list" hidden>
+            <h2>No notes yet</h2>
+            <p>Create your first note to get started.</p>
+          </div>
+        </section>
+        <section class="detail-pane" aria-label="Selected note">
+          <button id="back" class="button quiet mobile-back">← All notes</button>
+          <div id="placeholder" class="placeholder">
+            <span class="paper-mark" aria-hidden="true">N</span>
+            <h2>A little space to think</h2>
+            <p>Keep an idea, collect a few files,<br />or send something useful to Rukie.</p>
+          </div>
+          <article id="note-detail" hidden>
+            <div class="detail-toolbar">
+              <span class="eyebrow">Note</span>
+              <div class="toolbar-actions">
+                <button id="edit" class="button secondary small">Edit note</button
+                ><button id="delete" class="button quiet danger small">Delete</button>
+              </div>
+            </div>
+            <h2 id="detail-title" tabindex="-1"></h2>
+            <p id="note-body" class="note-body"></p>
+            <p class="note-date">Updated <time id="note-date"></time></p>
+            <section class="attachments" aria-labelledby="attachments-title">
+              <div class="section-heading">
+                <h3 id="attachments-title">
+                  Attachments <span id="attachment-count" class="count"></span>
+                </h3>
+                <label class="button secondary small file-picker"
+                  >Attach file<input id="file-input" type="file" aria-label="Attach file"
+                /></label>
+              </div>
+              <p id="files-status" class="hint" role="status"></p>
+              <div id="files"></div>
+            </section>
+          </article>
+          <form id="note-form" hidden>
+            <div class="detail-toolbar">
+              <span class="eyebrow" id="editor-title">New note</span>
+            </div>
+            <label class="field-label" for="body">What's on your mind?</label>
             <textarea
               id="body"
               name="body"
-              rows="7"
+              rows="12"
               maxlength="4000"
               required
-              placeholder="What would you like to remember?"
+              placeholder="Write a note…"
             ></textarea>
-            <div class="actions">
-              <button id="save" type="submit">Add note</button
-              ><button id="cancel" type="button" class="secondary" hidden>Cancel edit</button>
+            <p class="hint">
+              The first line becomes the note's heading. You can attach files after saving.
+            </p>
+            <div class="form-actions">
+              <button class="button primary" id="save" type="submit">Create note</button
+              ><button class="button secondary" id="cancel" type="button">Cancel</button>
             </div>
           </form>
-          <p role="status" id="status" aria-live="polite"></p>
-          <p role="alert" id="error" hidden></p>
-        </section>
-        <section aria-labelledby="notes-title">
-          <div class="list-heading">
-            <h2 id="notes-title">Your notes</h2>
-            <button id="refresh" class="secondary">Refresh notes</button>
-          </div>
-          <p id="empty" hidden>No notes yet. Add your first one.</p>
-          <div id="notes"></div>
         </section>
       </div>
-      <section class="editor" aria-labelledby="messaging-title">
-        <h2 id="messaging-title">Send to Rukie</h2>
-        <form id="messaging-form">
-          <label for="conversation">Conversation ID</label
-          ><input
-            id="conversation"
-            name="conversation"
-            placeholder="Uses REPORT_CONVERSATION_ID when omitted"
-          />
-          <label for="message">Message</label
-          ><textarea id="message" name="message" rows="3" required maxlength="64000"></textarea>
-          <label for="blob-key">Attachment blob key (optional)</label
-          ><input id="blob-key" name="blob-key" />
-          <label for="attachment-name">Attachment name</label
-          ><input id="attachment-name" name="attachment-name" placeholder="report.txt" />
-          <button type="submit">Send to Rukie</button>
-        </form>
-        <p id="messaging-status" role="status" aria-live="polite"></p>
-      </section>
-      <footer>
-        Notes live in PostgreSQL; attachments live in blob storage. Both survive app replacement.
-      </footer>
     </main>
-    <template id="note-template"
-      ><article>
-        <p class="note-body"></p>
-        <a class="open-note">Open note</a>
-        <section class="attachments" aria-label="Attachments"></section>
-        <div class="note-footer">
-          <time></time>
-          <div>
-            <button class="secondary edit">Edit</button
-            ><button class="secondary delete">Delete</button>
+    <dialog id="messaging-dialog" aria-labelledby="messaging-title">
+      <div class="dialog-heading">
+        <h2 id="messaging-title">Send to Rukie</h2>
+        <button class="button quiet small" data-close aria-label="Close messaging">✕</button>
+      </div>
+      <p class="dialog-intro">Share a message with your Rukie conversation.</p>
+      <form id="messaging-form">
+        <label class="field-label" for="message">Message</label
+        ><textarea
+          id="message"
+          name="message"
+          rows="5"
+          required
+          maxlength="64000"
+          placeholder="What would you like to share?"
+        ></textarea>
+        <details class="advanced">
+          <summary>Destination &amp; attachment options</summary>
+          <div class="fields">
+            <div>
+              <label class="field-label" for="conversation">Conversation ID</label
+              ><input id="conversation" name="conversation" />
+              <p class="hint">Leave blank to use the app's configured destination.</p>
+            </div>
+            <div>
+              <label class="field-label" for="blob-key">Attachment blob key</label
+              ><input id="blob-key" name="blob-key" />
+              <p class="hint">Optional. A file already in this app's storage.</p>
+            </div>
+            <div>
+              <label class="field-label" for="attachment-name">Attachment name</label
+              ><input id="attachment-name" name="attachment-name" placeholder="report.pdf" />
+            </div>
           </div>
+        </details>
+        <p id="messaging-status" class="status" role="status" aria-live="polite"></p>
+        <div class="form-actions">
+          <button class="button primary" type="submit">Send message</button>
         </div>
-      </article></template
-    >
+      </form>
+    </dialog>
+    <dialog id="testing-dialog" aria-labelledby="testing-title">
+      <div class="dialog-heading">
+        <h2 id="testing-title">Testing tools</h2>
+        <button class="button quiet small" data-close aria-label="Close testing tools">✕</button>
+      </div>
+      <p class="dialog-intro">Check the app's deployment and browser preference.</p>
+      <dl class="diagnostics">
+        <div>
+          <dt>Release</dt>
+          <dd id="version">Loading…</dd>
+        </div>
+        <div>
+          <dt>Environment</dt>
+          <dd id="environment">Loading…</dd>
+        </div>
+        <div>
+          <dt>Browser preference</dt>
+          <dd id="session-status">Loading…</dd>
+        </div>
+      </dl>
+      <a class="button secondary" href="/session/start">Remember this browser</a>
+      <p class="hint">This sets a test cookie; it does not sign you in.</p>
+      <p class="testing-note">
+        Notes use PostgreSQL and files use blob storage. Both survive app replacement. This demo has
+        no sign-in; use synthetic data.
+      </p>
+    </dialog>
   </body>
 </html>
