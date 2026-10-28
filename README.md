@@ -1,136 +1,58 @@
-# Hosted app for testing
+# Testing notes app
 
-A small notes application used to validate Rukie hosted-app builds, deployment, configuration, and PostgreSQL and blob persistence across replacement and rollback. This is a reference workload, not the future hosted-app template.
+A small hosted app exercising persistent notes, binary attachments, Rukie messages and
+private actions. Both backend and frontend use TypeScript; Bun serves the built Vite
+frontend and JSON API. There is no authentication: use synthetic data.
 
-The Go HTTP backend serves a plain HTML/JavaScript frontend and a JSON API from one container. PostgreSQL and blob storage run separately. The application container stores no persistent files. There is no authentication: use synthetic notes only and do not expose it as a private notes service.
-
-## Run locally
+## Run and check
 
 ```sh
-docker compose up --build -d
+docker compose up -d --build
+docker compose run --rm checks
 ```
 
-Open http://localhost:8080. Set `PORT=8081` before the command to choose another local port. `docker compose down` preserves notes and attachments. `docker compose down -v` deletes them. Local Compose uses the explicitly local file-backed blob fixture in `devtools`; deployed validation uses the platform API backed by Azure Blob Storage or Azurite.
+Open http://localhost:8080 (`PORT=8082` selects another port). `PUBLIC_APP_URL` sets the
+browser-facing address when using a proxy. Data survives `docker compose down`.
+Checks use a separate disposable PostgreSQL database and controlled HTTP boundaries.
+Local blob and message fixtures run in `devtools`. Messages appear in its logs.
 
-## Deploy to Rukie
+## Development
 
-Build a release from an exact commit of this repository. `rukie-app.json` declares the Dockerfile and the `web` endpoint on port 8080. Its `path` is the readiness check; the public endpoint still serves the application root.
+[AGENTS.md](AGENTS.md) describes directory ownership, app-facing interfaces and change rules.
+`frontend` owns the UI, `shared` owns API types, and `backend` contains HTTP adapters,
+actions, services, DAOs and external clients. Each private action supplies help, validation
+and both request/result Markdown through one definition in `backend/actions`. Shared
+definitions and the registry live separately in `backend/action-api`.
 
-The manifest requests the `main` database and private blob storage. Rukie provisions them for this app and injects connection settings; users do not enter credentials. Only `WELCOME_MESSAGE` is optional user configuration.
+Migrations in `backend/db/migrations` run in order before readiness under a transaction
+lock. Checksums detect edited applied files. The three original SQL files and their
+version ledger are preserved: existing notes, attachments and invocation receipts survive
+upgrading from the Go implementation. Their checksums are recorded on first startup.
 
-Runtime bindings:
+## Public API
 
-| Variable | Meaning |
-| --- | --- |
-| `DATABASE_URL` | Required PostgreSQL connection string for this app's database and role. The role needs permission to create its schema tables. Use TLS as required by the database service. |
-| `BLOB_STORAGE_URL` | Injected platform blob API endpoint. |
-| `BLOB_STORAGE_TOKEN` | Injected app-scoped bearer token; keep it on the backend. |
-| `WELCOME_MESSAGE` | Optional message displayed above the notes form. |
+- `GET /api/info`, `/api/config`, `/api/session`: public settings and browser preference.
+- `GET/POST /api/notes`, `GET/PUT/DELETE /api/notes/{id}`: notes.
+- `GET/POST /api/notes/{id}/attachments`: metadata and multipart `file` uploads.
+- `GET/DELETE /api/attachments/{key}`: original bytes and deletion.
+- `GET/POST /api/messaging`: configuration and message delivery.
+- `GET /health/ready`: initialized database readiness.
 
-Startup applies the SQL files in `migrations` transactionally under a PostgreSQL advisory lock, records schema version 2, and preserves existing notes. `/health/ready` checks database connectivity and schema initialization.
+Attachments support 32 MiB, including screenshots. Storage credentials stay in the
+backend. Metadata deletion commits before best-effort blob deletion; interrupted uploads
+or failed cleanup can leave private unreferenced objects until app deletion.
+`/notes/<id>` supports direct navigation and refresh. “Remember this browser” sets a
+host-only HttpOnly cookie and redirects to the configured URL; it is not authentication.
 
-Attachments are limited to 32 MiB. PostgreSQL stores metadata and Azure Blob Storage stores the bytes. The backend mediates downloads; browser code never receives storage credentials. Blob and PostgreSQL writes are not one transaction: an interrupted upload or failed byte cleanup after metadata deletion can leave an unreferenced blob, which app deletion removes with the private container. Deletion commits metadata first so a database failure cannot leave a visible attachment whose bytes were already destroyed. This reference workload does not provide an orphan collector.
+## Deploy and use
 
-`VERSION` is embedded into the application image and displayed in the UI. Changing it and building another release makes replacement and rollback visible without changing the schema. Requests and pooled database connections are bounded. SIGTERM drains HTTP requests before closing the pool.
+Build `docker build --platform linux/amd64 -t testing-notes:dev .` and publish the image
+with this repository directory. The manifest declares public port 8080, private loopback
+port 8081, PostgreSQL and blobs. [rukie-deploy.md](rukie-deploy.md) describes configuration;
+[rukie-api.md](rukie-api.md) describes actions. `VERSION` identifies the image in the UI.
+`RUKIE_APP_ENV` is an optional app display setting, defaulting to `production`.
 
-## Validation contract
-
-Rukie's Validation Platform pins a full source commit. It imports that revision into a local repository, builds and deploys through the real product UI, creates and edits notes through this frontend, replaces the release, rolls back, verifies retained note IDs/content, deletes a note, and removes the runtime and database. A second local commit changes `VERSION`; a separate local commit deliberately breaks the build. Those test mutations are not published here.
-
-The source pin is updated deliberately in the Rukie repository. Validation does not track this repository's `main` branch automatically. Storage provisioning and deletion go through the production VM-plane code. Validation does not create application databases itself.
-
-The public API is intentionally small:
-
-- `GET /api/info`: image version and configured welcome message.
-- `GET /api/notes`: most recent 200 notes.
-- `POST /api/notes`: create with `{"body":"text"}`.
-- `PUT /api/notes/{id}`: replace note text.
-- `DELETE /api/notes/{id}`: delete one note.
-- `GET /api/notes/{id}/attachments`: list attachment metadata.
-- `POST /api/notes/{id}/attachments`: multipart upload using the `file` field.
-- `GET /api/attachments/{key}`: download original bytes.
-- `DELETE /api/attachments/{key}`: delete metadata and bytes.
-- `GET /health/ready`: database and schema readiness.
-
-Frontend requests use relative URLs so the same image works at a domain root or Rukie's development path prefix. No runtime endpoint injects build failures or database faults; validation owns such interventions.
-
-## Public URLs and built frontend
-
-The container always serves a Vite production build. There is no development server or hot reload, including when `RUKIE_APP_ENV=development`.
-
-The manifest declares named ports and `health_path`. VM-plane injects `RUKIE_PUBLIC_URLS` (a JSON map from endpoint names to absolute browser-visible URLs) and `RUKIE_APP_ENV` (`production` by default). The same image can run behind different hostnames, HTTP/HTTPS, and external ports without rebuilding. The backend exposes only these public settings at `/api/config`; database and blob credentials stay server-side.
-
-Frontend API calls and assets use the endpoint root. `/notes/<id>` supports direct navigation and refresh. “Remember this browser” is a display preference, **not authentication**: it exercises a host-only HttpOnly cookie and an absolute redirect to the assigned URL. Cookies use Secure when that URL is HTTPS.
-
-Run `docker compose up --build` to build both frontend and backend locally. Standalone Compose defaults to `http://localhost:8080/`; set `PUBLIC_APP_URL` for a different external address (the default follows `PORT`). Production deployment obtains it automatically from VM-plane. Endpoint path prefixes are not supported.
-
-## Sending messages to Rukie
-
-Deploy with `message_access.room_ids` for synthetic validation rooms. The platform
-injects `RUKIE_API_URL`; set optional `REPORT_CONVERSATION_ID` through ordinary
-configuration. The **Send to Rukie** form sends text and an optional app-owned blob
-key. Use a key returned by the notes attachment upload. Rukie copies the bytes into
-conversation storage, so deleting the original attachment does not remove the
-message attachment.
-
-The form keeps the same request ID when retrying unchanged content. A successful
-response means Rukie committed the message. Changing the form starts a new request.
-Messages may mention agents using Rukie's normal mention syntax.
-
-This unauthenticated testing app exposes its send form publicly. Use only synthetic
-rooms and data; production apps must authorize who can invoke their messaging.
-
-### Rukie → app invocations
-
-The manifest declares a private handler at `127.0.0.1:8081/rukie`; it is
-not registered on the public web server. Use `invoke_hosted_app` with
-`action: "create_note"`, `body: {"text":"Hello from Rukie"}` and optional file
-references. The handler links the supplied blobs as downloadable note attachments
-(up to 50 files of 32 MiB each, including images). It preserves their filenames and
-original bytes, detects their content type, and leaves the note text unchanged.
-Repeated references to one file create one attachment. Deleting a note attachment
-removes its blob through the same path as browser uploads.
-
-The app stores the invocation receipt, note and attachment metadata in one
-PostgreSQL transaction. A failed import publishes no partial note or attachments.
-Repeated IDs return the original result, even if the retry content changes. Receipts survive app replacements. Rukie owns transport retries,
-while the app is responsible for idempotency. External side effects need their
-own idempotency mechanism.
-
-For validation, add `"lose_response_once":true` to the body. The handler commits
-the note and returns 503 the first time. Retrying the same invocation returns the
-saved result without another note. This fault is specific to this testing app.
-Copied files belong to the app and remain until the app removes them or is deleted.
-
-### Private action API
-
-The private handler accepts `POST /rukie` using the existing Rukie invocation
-transport. Requests have `{invocation_id, body: {operation, action?, body?, attachments?}, attachments?}`.
-Body operations are `list` (catalog), `describe` (action help), `validate` (preview)
-and `invoke` (execute). Validation attachments contain only `name`, `size_bytes`
-and `content_type`; execution attachments are outer-envelope `name`/`blob_key`
-references. Validation returns `{request_markdown, errors: []}` without changes.
-Rukie automatically executes declared read-only actions; writes require approval.
-Retries of execution reuse the same invocation ID.
-
-Validation returns `request_markdown` with the action and supplied values for approval.
-Execution returns `{result, response_markdown}` with structured data and its readable
-presentation. Writes retain both in the same idempotency receipt as their effects.
-
-### Adding an action
-
-Register it in `actions.go` with `defineAction`: name, description, read-only flag,
-help, validator, request formatter, execution handler and result formatter. The
-result formatter receives the handler's result type. The shared dispatcher builds
-the catalog, help, validation and execution envelopes. Missing callbacks or blank
-help fail startup; blank generated Markdown fails the request.
-
-Write handlers use the supplied transaction. Response formatting and receipt storage
-happen before commit, so a formatting failure rolls back the write. A retry replays
-the stored response without running either the handler or formatter again.
-
-Add an executable example to `TestEveryActionContract`. It enumerates the real
-catalog and calls every action through `/rukie`; missing examples fail the test.
-Run `docker compose --profile checks run --build --rm checks` for unit and contract
-tests against an isolated, disposable PostgreSQL service. Stop that service with
-`docker compose --profile checks stop checks-postgres` when finished.
+The Send to Rukie form keeps its request ID for unchanged retries. `create_note` keeps
+its mutation and full response in one database transaction; `lose_response_once` demonstrates
+retrying after a committed response was lost. `list_notes` is read-only.
+See [validation/README.md](validation/README.md) for evidence and boundaries.

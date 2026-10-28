@@ -1,9 +1,12 @@
 services:
   checks:
     profiles: [checks]
-    build:
-      context: .
-      target: checks
+    image: oven/bun:1.4.2
+    working_dir: /app
+    volumes:
+      - .:/app
+      - dependencies:/app/node_modules
+    command: sh -c "bun install --frozen-lockfile && bun run format:check && bun run check && bun run lint && bun test tests && bun run build"
     environment:
       TEST_DATABASE_URL: postgres://notes:notes@checks-postgres:5432/notes_checks?sslmode=disable
     depends_on:
@@ -33,6 +36,8 @@ services:
       DATABASE_URL: postgres://notes:notes@postgres:5432/notes?sslmode=disable
       BLOB_STORAGE_URL: http://blobs:8080/blobs
       BLOB_STORAGE_TOKEN: local-development-only
+      RUKIE_API_URL: http://blobs:8080
+      REPORT_CONVERSATION_ID: local-demo
       WELCOME_MESSAGE: Notes that stay with you across releases.
     depends_on:
       postgres:
@@ -40,10 +45,10 @@ services:
       blobs:
         condition: service_started
   blobs:
-    image: python:3.13-alpine
-    command: python /devtools/blob_service.py
+    image: oven/bun:1.4.2-slim
+    command: bun /devtools/services.ts
     volumes:
-      - ./devtools/blob_service.py:/devtools/blob_service.py:ro
+      - ./devtools/services.ts:/devtools/services.ts:ro
       - attachments_data:/data
   postgres:
     image: postgres:18
@@ -61,3 +66,4 @@ services:
 volumes:
   notes_data:
   attachments_data:
+  dependencies:
