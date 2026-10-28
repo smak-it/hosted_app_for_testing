@@ -1,5 +1,5 @@
-import { actions, findAction } from "../actions/registry";
-import type { Invocation } from "../actions/definition";
+import { actions, findAction } from "../action-api/registry";
+import type { Invocation } from "../action-api/definition";
 import type { NotesService } from "../services/notes";
 import { invoke } from "../services/invocation";
 import { failure } from "./errors";

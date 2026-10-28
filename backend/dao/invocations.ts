@@ -1,5 +1,5 @@
 import type { TransactionSQL } from "bun";
-import type { ActionResponse } from "../actions/definition";
+import type { ActionResponse } from "../action-api/definition";
 export class InvocationsDao {
   constructor(private db: TransactionSQL) {}
   async lock(id: string) {

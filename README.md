@@ -21,7 +21,8 @@ Local blob and message fixtures run in `devtools`. Messages appear in its logs.
 [AGENTS.md](AGENTS.md) describes directory ownership, app-facing interfaces and change rules.
 `frontend` owns the UI, `shared` owns API types, and `backend` contains HTTP adapters,
 actions, services, DAOs and external clients. Each private action supplies help, validation
-and both request/result Markdown through one definition in `backend/actions`.
+and both request/result Markdown through one definition in `backend/actions`. Shared
+definitions and the registry live separately in `backend/action-api`.
 
 Migrations in `backend/db/migrations` run in order before readiness under a transaction
 lock. Checksums detect edited applied files. The three original SQL files and their

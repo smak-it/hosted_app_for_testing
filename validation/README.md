@@ -20,7 +20,5 @@ Docker image build also passed.
 Chromium checked the built Docker image: created a note, uploaded a PNG, opened and
 reloaded its direct URL, and sent a message to the local Rukie receiver. No page errors.
 
-![Notes after the TypeScript port](evidence/typescript-notes.png)
-
 PostgreSQL and the app code are real. Blob storage and Rukie messaging use controlled
 HTTP boundaries. These checks do not claim a new live Rukie deployment.

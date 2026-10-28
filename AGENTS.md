@@ -8,19 +8,21 @@ whose reply is lost; it is part of this testing app's contract.
 
 ## What a hosted app is
 
-A hosted app is an independent web application with a container image, public HTTP
-endpoints, and optional PostgreSQL and private blob storage. Rukie is a collaboration
-app where people and agents work in rooms and task conversations. A hosted app can
+A hosted app is an independent application running a container image. It can provide
+a web UI or operate as a backend-only service, with HTTP endpoints and optional
+PostgreSQL and private blob storage. Rukie is a collaboration app where people and
+agents work in rooms and task conversations. A hosted app can
 send messages to granted conversations and expose actions that Rukie can invoke.
-The app owns its customer identity, authorization, business rules, and UI.
+The app owns its customer identity, authorization, business rules, and any UI.
 
 ## Structure and changes
 
 - `frontend/`: browser UI and HTTP client code. Never import backend code or credentials.
 - `shared/`: types and pure domain code used on both sides; no database, network or environment access.
 - `backend/http/`: parse requests, call services and map errors to HTTP responses.
-- `backend/actions/`: one file per action and an explicit registry. Each action declares
-  description, help, read-only status, validation, request Markdown, execution and result Markdown.
+- `backend/actions/`: concrete actions only, one file per action. Each declares description,
+  help, read-only status, validation, request Markdown, execution and result Markdown.
+- `backend/action-api/`: shared action definitions, registry and action helpers.
 - `backend/services/`: business operations and transaction boundaries. Add a service
   for a real workflow; avoid wrappers that only forward a DAO call.
 - `backend/dao/`: explicit SQL and persistence operations. Put SQL on its own lines,
@@ -37,7 +39,7 @@ components; no general-purpose repository framework or speculative abstraction.
 ## App-facing interfaces
 
 `rukie-app.json` declares public endpoints, health paths, storage and the private
-`rukie_api` listener. The image serves a built frontend using same-origin API URLs.
+`rukie_api` listener. This app serves a built frontend using same-origin API URLs.
 `DATABASE_URL`, `BLOB_STORAGE_URL` and `BLOB_STORAGE_TOKEN` are backend bindings;
 `RUKIE_PUBLIC_URLS` maps endpoint names to public URLs. Persist durable data in
 PostgreSQL and blobs, not the container filesystem.
@@ -71,3 +73,5 @@ For a new action, add an executable example to the catalog contract test. It mus
 exercise help, a valid and invalid preview, execution and a readable result. Test
 retry behavior for mutations. For schema changes, prove upgrade preserves existing data.
 Use a browser for UI changes. Keep fixtures and test controls outside production code.
+
+Keep generated screenshots out of Git; store local captures in ignored `validation/evidence/`.

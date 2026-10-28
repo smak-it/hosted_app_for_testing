@@ -1,5 +1,5 @@
-import type { Invocation } from "../actions/definition";
-import { findAction } from "../actions/registry";
+import type { Invocation } from "../action-api/definition";
+import { findAction } from "../action-api/registry";
 import { InputError } from "../domain/errors";
 import { InvocationsDao } from "../dao/invocations";
 import type { NotesService } from "./notes";

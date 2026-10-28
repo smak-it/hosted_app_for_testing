@@ -1,4 +1,4 @@
-import { defineAction } from "./definition";
+import { defineAction } from "../action-api/definition";
 import { InputError } from "../domain/errors";
 export const createNote = defineAction({
   name: "create_note",

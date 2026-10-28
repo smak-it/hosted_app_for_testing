@@ -8,12 +8,12 @@ import { NotesService } from "../backend/services/notes";
 import { BlobStorage } from "../backend/integrations/blobs";
 import { publicHandler } from "../backend/http/public";
 import { privateHandler } from "../backend/http/private";
-import { actions } from "../backend/actions/registry";
+import { actions } from "../backend/action-api/registry";
 import {
   defineAction,
   registerActions,
   type ActionDefinition,
-} from "../backend/actions/definition";
+} from "../backend/action-api/definition";
 import type { Note, Attachment } from "../shared/notes";
 import { configuration } from "../backend/config";
 const db = new SQL(process.env.TEST_DATABASE_URL!);
