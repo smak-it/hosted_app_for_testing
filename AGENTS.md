@@ -36,6 +36,18 @@ The app owns its customer identity, authorization, business rules, and any UI.
 Keep the existing UI and public contracts when refactoring. Use small concrete
 components; no general-purpose repository framework or speculative abstraction.
 
+## UI design
+
+For apps with a UI, use a light neutral canvas, white surfaces, dark readable text
+and one primary accent. Define colors, type and spacing centrally; reuse buttons,
+fields, menus, attachment rows and notices. Keep page titles around 28–34 px,
+section titles 16–20 px and body text 14–16 px, with consistent spacing and alignment.
+Give each view a clear purpose and primary action. Keep secondary controls quiet
+and occasional or technical controls in menus, disclosures or a separate view.
+Use plain user-facing labels. Design empty, loading, error and success states.
+Preserve keyboard access and visible focus; check narrow screens, long content and
+filenames without page-level horizontal scrolling. Adapt layout to the app's workflow.
+
 ## App-facing interfaces
 
 `rukie-app.json` declares public endpoints, health paths, storage and the private

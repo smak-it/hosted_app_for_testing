@@ -1,72 +1,46 @@
 import type { Attachment } from "../../shared/notes";
-type Controls = {
-  request: <T = unknown>(path: string, options?: RequestInit) => Promise<T>;
-  action: (work: () => Promise<void>) => Promise<void>;
-  setBusy: (busy: boolean) => void;
-  refresh: () => Promise<void>;
-};
-export async function renderAttachments(
-  section: HTMLElement,
-  noteID: number,
-  { request, action, setBusy, refresh }: Controls,
-) {
-  const items = await request<Attachment[]>(`api/notes/${noteID}/attachments`);
-  const title = document.createElement("h3");
-  title.textContent = "Attachments";
-  section.append(title);
-  for (const item of items) {
-    const row = document.createElement("p");
+import { MAX_FILE_BYTES } from "../../shared/notes";
+import { request } from "./api";
+import { element } from "./dom";
+
+export function showAttachments(items: Attachment[], remove: (item: Attachment) => void) {
+  element("#attachment-count").textContent = String(items.length);
+  element("#files-status").textContent = items.length
+    ? ""
+    : "No files attached. Add an image, document or other file.";
+  const rows = items.map((item) => {
+    const row = document.createElement("div");
+    row.className = "file-row";
+    const info = document.createElement("div");
+    info.className = "file-info";
     const link = document.createElement("a");
-    link.href = new URL(`api/attachments/${item.id}`, window.location.origin + "/").href;
+    link.href = `/api/attachments/${encodeURIComponent(item.id)}`;
     link.textContent = item.filename;
     link.download = item.filename;
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "secondary";
-    remove.textContent = "Delete attachment";
-    remove.setAttribute("aria-label", `Delete attachment ${item.filename}`);
-    remove.addEventListener("click", () =>
-      action(async () => {
-        setBusy(true);
-        try {
-          await request(`api/attachments/${item.id}`, { method: "DELETE" });
-          await refresh();
-        } finally {
-          setBusy(false);
-        }
-      }),
-    );
-    row.append(link, " ", remove);
-    section.append(row);
-  }
-  const form = document.createElement("form");
-  const label = document.createElement("label");
-  label.textContent = "Attach a file";
-  const input = document.createElement("input");
-  input.type = "file";
-  input.required = true;
-  input.setAttribute("aria-label", "Attach a file");
-  label.append(input);
-  const upload = document.createElement("button");
-  upload.type = "submit";
-  upload.textContent = "Upload attachment";
-  form.append(label, upload);
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    action(async () => {
-      const file = input.files?.[0];
-      if (!file || file.size > 32 * 1024 * 1024)
-        throw new Error("Choose a file of at most 32 MiB.");
-      const body = new FormData();
-      body.append("file", file);
-      setBusy(true);
-      try {
-        await request(`api/notes/${noteID}/attachments`, { method: "POST", body });
-        await refresh();
-      } finally {
-        setBusy(false);
-      }
-    });
+    const size = document.createElement("span");
+    size.className = "file-size";
+    size.textContent =
+      item.size < 1024
+        ? `${item.size} bytes`
+        : item.size < 1024 * 1024
+          ? `${Math.ceil(item.size / 1024)} KB`
+          : `${(item.size / 1024 / 1024).toFixed(1)} MB`;
+    info.append(link, size);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "button quiet small danger";
+    button.textContent = "Remove";
+    button.setAttribute("aria-label", `Remove ${item.filename}`);
+    button.addEventListener("click", () => remove(item));
+    row.append(info, button);
+    return row;
   });
-  section.append(form);
+  element("#files").replaceChildren(...rows);
+}
+
+export async function uploadAttachment(noteID: number, file: File) {
+  if (file.size > MAX_FILE_BYTES) throw new Error("Choose a file of at most 32 MiB.");
+  const body = new FormData();
+  body.append("file", file);
+  await request(`api/notes/${noteID}/attachments`, { method: "POST", body });
 }

@@ -1,5 +1,10 @@
 # Testing notes app
 
+The notes workspace pairs a compact list with the selected note, with a single-view
+layout on small screens. Create or edit notes in the detail panel, attach and download
+files, and open **Send to Rukie** to share a message. **Testing tools** contains release,
+environment and browser-preference checks.
+
 A small hosted app exercising persistent notes, binary attachments, Rukie messages and
 private actions. Both backend and frontend use TypeScript; Bun serves the built Vite
 frontend and JSON API. There is no authentication: use synthetic data.
