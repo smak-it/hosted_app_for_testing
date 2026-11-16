@@ -56,10 +56,28 @@ filenames without page-level horizontal scrolling. Adapt layout to the app's wor
 `RUKIE_PUBLIC_URLS` maps endpoint names to public URLs. Persist durable data in
 PostgreSQL and blobs, not the container filesystem.
 
-`POST $RUKIE_API_URL/messages` sends `{request_id, conversation_id, content,
-attachments?: [{blob_key, name}]}`. Reuse the request ID after an ambiguous failure.
-Conversation destinations are app configuration. Only granted rooms are writable;
-this API does not provide conversation history or customer authentication.
+Prefer app-local aliases for new integrations. Advertise aliases and descriptions in
+`rukie-app.json`: `connections: {rooms: {reports: "Report destination"}, users:
+{owner: "Task observer"}}`. Rukie deployment settings bind these aliases to room/user
+UUIDs. Every mapped room allows messages and task creation, including messaging its
+task conversations. It does not grant conversation reads or customer authentication.
+
+Messages POST `{request_id, room_alias, content, attachments?: [{blob_key, name}]}`
+to `$RUKIE_API_URL/messages`. Tasks POST `{request_id, room_alias, observer_alias,
+assignee_alias?, title?, description?, parent?}` to `$RUKIE_API_URL/tasks`. Observers
+must resolve to humans; assignees may resolve to humans or agents. Parent accepts a
+task ID or alias. Reuse request IDs after ambiguous failures. Returned conversation
+IDs can be used for later messages to dynamically created tasks.
+
+Concrete `conversation_id`/`room_id` and `assignee`/`observer` usernames also work.
+Specify exactly one form for each destination or participant. This testing app's
+existing Send to Rukie form uses concrete conversation IDs. Configure its room access
+through `connections.rooms`; undeclared room aliases are allowed.
+
+Rukie owns the bindings. `list_hosted_apps` reads them; `configure_hosted_app` edits
+them without redeployment. A supplied connections object replaces the whole map;
+`{}` clears it. Omitted/null settings preserve it, including during deployment.
+Keep real tenant IDs out of source and guidance. Explain each alias in `rukie-deploy.md`.
 
 The private action request is `{invocation_id, body: {operation, action?, body?,
 attachments?}, attachments?}`. Operations are `list`, `describe`, `validate`, `invoke`.

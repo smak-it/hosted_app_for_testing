@@ -1,8 +1,9 @@
 # Deployment
 
 The notes UI and private invocation API need no room access. For the “Send to Rukie”
-form, grant the containing room of the destination conversation (including task
-conversations). Set `REPORT_CONVERSATION_ID` to that conversation ID as its default;
+form, include the containing room of the destination conversation in deployment
+`connections.rooms`, for example `{"reports":"<room UUID>"}`. This also authorizes
+messages to its task conversations. The alias need not be declared in the manifest. Set `REPORT_CONVERSATION_ID` to that conversation ID as its default;
 the form also lets the user enter a destination explicitly. Grant only test rooms:
 this reference app has no authentication.
 
