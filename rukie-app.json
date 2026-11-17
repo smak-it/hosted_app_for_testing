@@ -21,7 +21,10 @@
       "reports": "Where this app sends note reports."
     },
     "users": {
-      "reviewer": "Who reviews reports when mentioned."
+      "reviewer": {
+        "description": "The human who reviews reports and can observe app-created tasks.",
+        "human_only": true
+      }
     }
   }
 }

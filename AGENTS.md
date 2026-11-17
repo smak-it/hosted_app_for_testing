@@ -60,6 +60,8 @@ This app uses the `reports` room alias and `reviewer` user alias declared in
 `rukie-app.json`. Send reports with `room_alias: "reports"` and mention the reviewer
 with `@{reviewer}` in message content. Rukie resolves these names to tenant rooms
 and users. Keep real tenant IDs and usernames out of app code and examples.
+The reviewer declaration uses `human_only: true` because task observers must be
+human; omit that marker for aliases that may point to either a human or an agent.
 `rukie-deploy.md` explains each connection's purpose.
 
 Messages POST `{request_id, room_alias, content, attachments?: [{blob_key, name}]}`
