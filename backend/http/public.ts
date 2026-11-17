@@ -11,7 +11,7 @@ function noteID(value: string) {
   return Number(value);
 }
 export function publicHandler(service: NotesService, config: Config, version: string) {
-  const rukie = new Rukie(config.messagingURL, config.conversation);
+  const rukie = new Rukie(config.messagingURL);
   const route = async (req: Request): Promise<Response> => {
     const path = new URL(req.url).pathname;
     const method = req.method;
@@ -41,7 +41,7 @@ export function publicHandler(service: NotesService, config: Config, version: st
       if (method === "GET")
         return Response.json({
           enabled: !!config.messagingURL,
-          conversation_id: config.conversation,
+          room_alias: "reports",
         });
       if (method === "POST") {
         const text = await req.text();

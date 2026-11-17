@@ -15,5 +15,13 @@
   "rukie_api": {
     "port": 8081,
     "path": "/rukie"
+  },
+  "connections": {
+    "rooms": {
+      "reports": "Where this app sends note reports."
+    },
+    "users": {
+      "reviewer": "Who reviews reports when mentioned."
+    }
   }
 }

@@ -5,7 +5,6 @@ let pending: { serialized: string; requestID: string } | null = null;
 fetch("/api/messaging")
   .then((response) => response.json())
   .then((config) => {
-    element<HTMLInputElement>("#conversation").value = config.conversation_id;
     if (!config.enabled)
       status.textContent = "Messaging is available when deployed with Rukie messaging access.";
   })
@@ -17,7 +16,7 @@ form.addEventListener("submit", async (event) => {
   const fields = new FormData(form);
   const blobKey = String(fields.get("blob-key")).trim();
   const message = {
-    conversation_id: String(fields.get("conversation")).trim(),
+    room_alias: "reports",
     content: String(fields.get("message")),
     attachments: blobKey
       ? [{ blob_key: blobKey, name: String(fields.get("attachment-name")).trim() }]

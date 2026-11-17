@@ -49,7 +49,6 @@ const config = configuration({
   BLOB_STORAGE_TOKEN: "test-token",
   RUKIE_PUBLIC_URLS: '{"web":"https://notes.example/"}',
   RUKIE_API_URL: boundary.url.href,
-  REPORT_CONVERSATION_ID: "conversation",
 });
 const service = new NotesService(db, new BlobStorage(config.blobURL, config.blobToken));
 const web = publicHandler(service, config, "test");
@@ -234,14 +233,25 @@ test("format failure rolls back the mutation and receipts replay without formatt
     actions.delete(action.name);
   }
 });
-test("messaging forwards stable identities and blob references with configured destination", async () => {
+test("messaging uses declared room and user aliases with stable identities and blob references", async () => {
   const payload = {
     request_id: Bun.randomUUIDv7(),
-    content: "@reviewer Review",
+    content: "@{reviewer} Review",
     attachments: [{ blob_key: "file", name: "file.pdf" }],
   };
   expect((await request("/api/messaging", "POST", payload)).status).toBe(200);
-  expect(messages).toEqual([{ ...payload, conversation_id: "conversation" }]);
+  expect(await (await request("/api/messaging")).json()).toEqual({
+    enabled: true,
+    room_alias: "reports",
+  });
+  expect(messages).toEqual([{ ...payload, room_alias: "reports" }]);
+  const direct = {
+    ...payload,
+    request_id: Bun.randomUUIDv7(),
+    conversation_id: "concrete-conversation",
+  };
+  expect((await request("/api/messaging", "POST", direct)).status).toBe(200);
+  expect(messages.at(-1)).toEqual(direct);
 });
 test("migration checksum rejects edited history", async () => {
   await db`UPDATE schema_migrations SET checksum = 'changed' WHERE version = 1`;

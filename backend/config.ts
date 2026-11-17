@@ -18,7 +18,6 @@ export function configuration(env: Record<string, string | undefined> = process.
     blobURL: required(env, "BLOB_STORAGE_URL"),
     blobToken: required(env, "BLOB_STORAGE_TOKEN"),
     messagingURL: env.RUKIE_API_URL || "",
-    conversation: env.REPORT_CONVERSATION_ID || "",
     message: env.WELCOME_MESSAGE || "",
     environment,
     urls,

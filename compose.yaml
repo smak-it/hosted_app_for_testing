@@ -37,7 +37,6 @@ services:
       BLOB_STORAGE_URL: http://blobs:8080/blobs
       BLOB_STORAGE_TOKEN: local-development-only
       RUKIE_API_URL: http://blobs:8080
-      REPORT_CONVERSATION_ID: local-demo
       WELCOME_MESSAGE: Notes that stay with you across releases.
     depends_on:
       postgres:

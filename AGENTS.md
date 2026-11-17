@@ -56,28 +56,24 @@ filenames without page-level horizontal scrolling. Adapt layout to the app's wor
 `RUKIE_PUBLIC_URLS` maps endpoint names to public URLs. Persist durable data in
 PostgreSQL and blobs, not the container filesystem.
 
-Prefer app-local aliases for new integrations. Advertise aliases and descriptions in
-`rukie-app.json`: `connections: {rooms: {reports: "Report destination"}, users:
-{owner: "Task observer"}}`. Rukie deployment settings bind these aliases to room/user
-UUIDs. Every mapped room allows messages and task creation, including messaging its
-task conversations. It does not grant conversation reads or customer authentication.
+This app uses the `reports` room alias and `reviewer` user alias declared in
+`rukie-app.json`. Send reports with `room_alias: "reports"` and mention the reviewer
+with `@{reviewer}` in message content. Rukie resolves these names to tenant rooms
+and users. Keep real tenant IDs and usernames out of app code and examples.
+`rukie-deploy.md` explains each connection's purpose.
 
 Messages POST `{request_id, room_alias, content, attachments?: [{blob_key, name}]}`
-to `$RUKIE_API_URL/messages`. Tasks POST `{request_id, room_alias, observer_alias,
-assignee_alias?, title?, description?, parent?}` to `$RUKIE_API_URL/tasks`. Observers
-must resolve to humans; assignees may resolve to humans or agents. Parent accepts a
-task ID or alias. Reuse request IDs after ambiguous failures. Returned conversation
-IDs can be used for later messages to dynamically created tasks.
+to `$RUKIE_API_URL/messages`. Reuse the request ID after ambiguous failures. Rukie
+resolves alias mentions in prose; escaped examples, code and links stay literal.
+An unconnected or unavailable user alias rejects the message without publishing it.
+Rukie applies normal mention permissions and notifications. The app owns authorization
+for its own callers; a room connection grants messages and task creation, not reads.
 
-Concrete `conversation_id`/`room_id` and `assignee`/`observer` usernames also work.
-Specify exactly one form for each destination or participant. This testing app's
-existing Send to Rukie form uses concrete conversation IDs. Configure its room access
-through `connections.rooms`; undeclared room aliases are allowed.
-
-Rukie owns the bindings. `list_hosted_apps` reads them; `configure_hosted_app` edits
-them without redeployment. A supplied connections object replaces the whole map;
-`{}` clears it. Omitted/null settings preserve it, including during deployment.
-Keep real tenant IDs out of source and guidance. Explain each alias in `rukie-deploy.md`.
+Tasks can POST `{request_id, room_alias, observer_alias, assignee_alias?, title?,
+description?, parent?}` to `$RUKIE_API_URL/tasks`. The observer must resolve to a
+human. Returned conversation IDs can address later messages to dynamically created
+tasks. Concrete destination IDs and usernames remain supported by Rukie; this app's
+normal messaging flow demonstrates aliases.
 
 The private action request is `{invocation_id, body: {operation, action?, body?,
 attachments?}, attachments?}`. Operations are `list`, `describe`, `validate`, `invoke`.

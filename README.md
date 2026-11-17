@@ -57,7 +57,10 @@ port 8081, PostgreSQL and blobs. [rukie-deploy.md](rukie-deploy.md) describes co
 [rukie-api.md](rukie-api.md) describes actions. `VERSION` identifies the image in the UI.
 `RUKIE_APP_ENV` is an optional app display setting, defaulting to `production`.
 
-The Send to Rukie form keeps its request ID for unchanged retries. `create_note` keeps
+The Send to Rukie form sends to the declared `reports` room alias and starts with
+an example mentioning `@{reviewer}`. Configure those connections in Rukie; the app
+needs no conversation-ID setting. Raw destination IDs remain supported by the Rukie
+API for dynamic task conversations. The form keeps its request ID for unchanged retries. `create_note` keeps
 its mutation and full response in one database transaction; `lose_response_once` demonstrates
 retrying after a committed response was lost. `list_notes` is read-only.
 See [validation/README.md](validation/README.md) for evidence and boundaries.
