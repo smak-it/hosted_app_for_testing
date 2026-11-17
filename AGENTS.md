@@ -62,6 +62,7 @@ with `@{reviewer}` in message content. Rukie resolves these names to tenant room
 and users. Keep real tenant IDs and usernames out of app code and examples.
 The reviewer declaration uses `human_only: true` because task observers must be
 human; omit that marker for aliases that may point to either a human or an agent.
+Declare rooms as objects with a `description` field, as in this app's `reports` entry.
 `rukie-deploy.md` explains each connection's purpose.
 
 Messages POST `{request_id, room_alias, content, attachments?: [{blob_key, name}]}`

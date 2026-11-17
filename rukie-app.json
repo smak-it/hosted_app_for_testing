@@ -18,7 +18,9 @@
   },
   "connections": {
     "rooms": {
-      "reports": "Where this app sends note reports."
+      "reports": {
+        "description": "Where this app sends note reports."
+      }
     },
     "users": {
       "reviewer": {
