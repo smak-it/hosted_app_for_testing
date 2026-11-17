@@ -56,13 +56,15 @@ filenames without page-level horizontal scrolling. Adapt layout to the app's wor
 `RUKIE_PUBLIC_URLS` maps endpoint names to public URLs. Persist durable data in
 PostgreSQL and blobs, not the container filesystem.
 
-Report delivery uses `room_alias: "reports"` at `$RUKIE_API_URL/messages`.
-Mention the reviewer in Markdown prose with `@{reviewer}`. These aliases are
-documented in `rukie-app.json` and explained in `rukie-deploy.md`. Use case-sensitive
-user aliases that start with a letter and contain up to 64 ASCII letters, digits,
-or underscores. Keep tenant IDs and usernames out of app code and examples.
+Use app-local aliases for fixed destinations and user roles. Describe each one
+in `rukie-app.json` under `connections.rooms` or `connections.users`. Set
+`human_only: true` on a user role that requires a person. User aliases are
+case-sensitive, start with an ASCII letter and contain at most 64 ASCII letters,
+digits or underscores.
 
-The report endpoint forwards the request ID, Markdown content, and optional
+The report endpoint posts to `$RUKIE_API_URL/messages` with `room_alias: "reports"`.
+Use `@{reviewer}` to mention the reviewer in Markdown prose.
+The endpoint forwards the request ID, content and optional
 `{blob_key, name}` attachments to Rukie. Reuse the request ID after ambiguous
 failures and create a fresh ID for a new send after confirmed delivery.
 
@@ -75,9 +77,10 @@ Keep read-only actions non-mutating. Execution checks current domain state; a pr
 is not authorization. Commit mutations and the complete response receipt together;
 repeated invocation IDs return the saved response without repeating effects.
 
-Keep `rukie-app.md`, `rukie-deploy.md` and `rukie-api.md` concise and specific to this
-app: purpose, configuration/message destinations, and action usage. They are captured
-with releases. Do not put credentials, real conversation IDs or platform internals there.
+Keep the published guidance specific to this app. Give its purpose in `rukie-app.md`.
+In `rukie-deploy.md`, name its settings and aliases and explain what each is for,
+including which roles require a human. Describe its actions in `rukie-api.md`.
+Keep credentials and real tenant identifiers out of these documents.
 
 ## Development and validation
 

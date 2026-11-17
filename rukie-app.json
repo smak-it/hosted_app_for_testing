@@ -24,7 +24,7 @@
     },
     "users": {
       "reviewer": {
-        "description": "The human who reviews reports and can observe app-created tasks.",
+        "description": "The person asked to review note reports.",
         "human_only": true
       }
     }
