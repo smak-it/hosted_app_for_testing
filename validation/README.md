@@ -12,6 +12,9 @@ mention example, had no conversation-ID field, sent a report that the backend fo
 app request construction; actual alias resolution, notifications and agent triggering
 are exercised by Rukie's hosted-app messaging scenario.
 
+Chromium also verified that sending identical text after confirmed delivery uses
+a fresh request ID. A retry after an interrupted response keeps the same ID.
+
 # Notes workspace validation
 
 28 October 2026. Production Compose image, real PostgreSQL and local blob/Rukie fixtures.

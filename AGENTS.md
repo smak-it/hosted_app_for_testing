@@ -56,28 +56,15 @@ filenames without page-level horizontal scrolling. Adapt layout to the app's wor
 `RUKIE_PUBLIC_URLS` maps endpoint names to public URLs. Persist durable data in
 PostgreSQL and blobs, not the container filesystem.
 
-This app uses the `reports` room alias and `reviewer` user alias declared in
-`rukie-app.json`. Send reports with `room_alias: "reports"` and mention the reviewer
-with `@{reviewer}` in message content. The agent reads the manifest and configures descriptions, targets and restrictions
-in Rukie; the platform does not import or reconcile these declarations. At runtime,
-Rukie resolves these names using its saved settings. Keep real tenant IDs and usernames out of app code and examples.
-The reviewer declaration uses `human_only: true` because task observers must be
-human; omit that marker for aliases that may point to either a human or an agent.
-Declare rooms as objects with a `description` field, as in this app's `reports` entry.
-`rukie-deploy.md` explains each connection's purpose.
+Report delivery uses `room_alias: "reports"` at `$RUKIE_API_URL/messages`.
+Mention the reviewer in Markdown prose with `@{reviewer}`. These aliases are
+documented in `rukie-app.json` and explained in `rukie-deploy.md`. Use case-sensitive
+user aliases that start with a letter and contain up to 64 ASCII letters, digits,
+or underscores. Keep tenant IDs and usernames out of app code and examples.
 
-Messages POST `{request_id, room_alias, content, attachments?: [{blob_key, name}]}`
-to `$RUKIE_API_URL/messages`. Reuse the request ID after ambiguous failures. Rukie
-resolves alias mentions in prose; escaped examples, code and links stay literal.
-An unconnected or unavailable user alias rejects the message without publishing it.
-Rukie applies normal mention permissions and notifications. The app owns authorization
-for its own callers; a room connection grants messages and task creation, not reads.
-
-Tasks can POST `{request_id, room_alias, observer_alias, assignee_alias?, title?,
-description?, parent?}` to `$RUKIE_API_URL/tasks`. The observer must resolve to a
-human. Returned conversation IDs can address later messages to dynamically created
-tasks. Concrete destination IDs and usernames remain supported by Rukie; this app's
-normal messaging flow demonstrates aliases.
+The report endpoint forwards the request ID, Markdown content, and optional
+`{blob_key, name}` attachments to Rukie. Reuse the request ID after ambiguous
+failures and create a fresh ID for a new send after confirmed delivery.
 
 The private action request is `{invocation_id, body: {operation, action?, body?,
 attachments?}, attachments?}`. Operations are `list`, `describe`, `validate`, `invoke`.

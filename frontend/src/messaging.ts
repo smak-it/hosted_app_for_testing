@@ -37,6 +37,7 @@ form.addEventListener("submit", async (event) => {
     const result = await response.json();
     if (!response.ok)
       throw new Error(result.detail || result.error || `Request failed (${response.status}).`);
+    pending = null;
     status.textContent = "Message delivered to Rukie.";
   } catch (error) {
     status.textContent = `${errorText(error)} Retry with unchanged fields to avoid a duplicate.`;
