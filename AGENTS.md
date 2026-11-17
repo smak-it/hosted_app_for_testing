@@ -58,8 +58,9 @@ PostgreSQL and blobs, not the container filesystem.
 
 This app uses the `reports` room alias and `reviewer` user alias declared in
 `rukie-app.json`. Send reports with `room_alias: "reports"` and mention the reviewer
-with `@{reviewer}` in message content. Rukie resolves these names to tenant rooms
-and users. Keep real tenant IDs and usernames out of app code and examples.
+with `@{reviewer}` in message content. The agent reads the manifest and configures descriptions, targets and restrictions
+in Rukie; the platform does not import or reconcile these declarations. At runtime,
+Rukie resolves these names using its saved settings. Keep real tenant IDs and usernames out of app code and examples.
 The reviewer declaration uses `human_only: true` because task observers must be
 human; omit that marker for aliases that may point to either a human or an agent.
 Declare rooms as objects with a `description` field, as in this app's `reports` entry.

@@ -3,11 +3,11 @@
 The reference app declares `reports` and `reviewer` and sends alias-based messages.
 `docker compose run --rm checks` passes formatting, types, lint, all nine HTTP/action
 journeys (70 assertions), and the production frontend build. The messaging journey
-checks the default room alias, unchanged mention content and concrete-ID compatibility.
+checks the default room alias, unchanged mention content and the fixed report destination.
 
 Chromium checked the production Compose image with real PostgreSQL and the local
 Rukie fixture through a test HTTPS origin: Send to Rukie opened with the reviewer
-mention example, had no conversation-ID field, sent `room_alias: "reports"` and
+mention example, had no conversation-ID field, sent a report that the backend forwards with `room_alias: "reports"` and
 `@{reviewer}`, and showed successful delivery without browser errors. This checks
 app request construction; actual alias resolution, notifications and agent triggering
 are exercised by Rukie's hosted-app messaging scenario.

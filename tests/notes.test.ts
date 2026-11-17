@@ -242,7 +242,6 @@ test("messaging uses declared room and user aliases with stable identities and b
   expect((await request("/api/messaging", "POST", payload)).status).toBe(200);
   expect(await (await request("/api/messaging")).json()).toEqual({
     enabled: true,
-    room_alias: "reports",
   });
   expect(messages).toEqual([{ ...payload, room_alias: "reports" }]);
   const direct = {
@@ -251,7 +250,8 @@ test("messaging uses declared room and user aliases with stable identities and b
     conversation_id: "concrete-conversation",
   };
   expect((await request("/api/messaging", "POST", direct)).status).toBe(200);
-  expect(messages.at(-1)).toEqual(direct);
+  const { conversation_id: _destination, ...report } = direct;
+  expect(messages.at(-1)).toEqual({ ...report, room_alias: "reports" });
 });
 test("migration checksum rejects edited history", async () => {
   await db`UPDATE schema_migrations SET checksum = 'changed' WHERE version = 1`;

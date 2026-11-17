@@ -16,7 +16,6 @@ form.addEventListener("submit", async (event) => {
   const fields = new FormData(form);
   const blobKey = String(fields.get("blob-key")).trim();
   const message = {
-    room_alias: "reports",
     content: String(fields.get("message")),
     attachments: blobKey
       ? [{ blob_key: blobKey, name: String(fields.get("attachment-name")).trim() }]

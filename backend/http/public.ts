@@ -41,12 +41,11 @@ export function publicHandler(service: NotesService, config: Config, version: st
       if (method === "GET")
         return Response.json({
           enabled: !!config.messagingURL,
-          room_alias: "reports",
         });
       if (method === "POST") {
         const text = await req.text();
         if (Buffer.byteLength(text) > 128 * 1024) throw new InputError("Invalid message.", 413);
-        return rukie.send(JSON.parse(text));
+        return rukie.sendReport(JSON.parse(text));
       }
     }
     if (path === "/api/notes" && method === "GET") return Response.json(await service.dao.list());

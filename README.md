@@ -58,7 +58,8 @@ port 8081, PostgreSQL and blobs. [rukie-deploy.md](rukie-deploy.md) describes co
 `RUKIE_APP_ENV` is an optional app display setting, defaulting to `production`.
 
 The Send to Rukie form sends to the declared `reports` room alias and starts with
-an example mentioning `@{reviewer}`. Configure those connections in Rukie; the app
+an example mentioning `@{reviewer}`. The report endpoint owns the fixed destination. Configure those connections and
+their descriptions in Rukie; the app
 needs no conversation-ID setting. Raw destination IDs remain supported by the Rukie
 API for dynamic task conversations. The form keeps its request ID for unchanged retries. `create_note` keeps
 its mutation and full response in one database transaction; `lose_response_once` demonstrates
