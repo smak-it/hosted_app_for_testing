@@ -78,8 +78,9 @@ is not authorization. Commit mutations and the complete response receipt togethe
 repeated invocation IDs return the saved response without repeating effects.
 
 Keep the published guidance specific to this app. Give its purpose in `rukie-app.md`.
-In `rukie-deploy.md`, name its settings and aliases and explain what each is for,
-including which roles require a human. Describe its actions in `rukie-api.md`.
+Put required settings, aliases, their purposes and human-only roles at the start
+of `rukie-deploy.md` so they fit in the 5 KiB release preview.
+Describe the app's actions in `rukie-api.md`.
 Keep credentials and real tenant identifiers out of these documents.
 
 ## Development and validation
