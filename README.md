@@ -18,6 +18,8 @@ docker compose run --rm checks
 
 Open http://localhost:8080 (`PORT=8082` selects another port). `PUBLIC_APP_URL` sets the
 browser-facing address when using a proxy. Data survives `docker compose down`.
+For local testing, Compose accepts `RUKIE_APP_ENV=development` to change the
+environment label from its default of `production`.
 Checks use a separate disposable PostgreSQL database and controlled HTTP boundaries.
 Local blob and message fixtures run in `devtools`. Messages appear in its logs.
 
@@ -55,7 +57,6 @@ Build `docker build --platform linux/amd64 -t testing-notes:dev .` and publish t
 with this repository directory. The manifest declares public port 8080, private loopback
 port 8081, PostgreSQL and blobs. [rukie-deploy.md](rukie-deploy.md) describes configuration;
 [rukie-api.md](rukie-api.md) describes actions. `VERSION` identifies the image in the UI.
-`RUKIE_APP_ENV` is an optional app display setting, defaulting to `production`.
 
 **Send to Rukie** delivers note reports and attachments to the `reports` room.
 Include `@{reviewer}` in the message to ask for a review. If delivery is
