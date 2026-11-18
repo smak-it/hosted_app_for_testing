@@ -101,7 +101,10 @@
         <h2 id="messaging-title">Send to Rukie</h2>
         <button class="button quiet small" data-close aria-label="Close messaging">✕</button>
       </div>
-      <p class="dialog-intro">Share a message with your Rukie conversation.</p>
+      <p class="dialog-intro">
+        Send a report to the connected room. Mention @{reviewer} to ask the connected user to review
+        it.
+      </p>
       <form id="messaging-form">
         <label class="field-label" for="message">Message</label
         ><textarea
@@ -111,15 +114,12 @@
           required
           maxlength="64000"
           placeholder="What would you like to share?"
-        ></textarea>
+        >
+@{reviewer}, please review this note.</textarea
+        >
         <details class="advanced">
-          <summary>Destination &amp; attachment options</summary>
+          <summary>Attachment options</summary>
           <div class="fields">
-            <div>
-              <label class="field-label" for="conversation">Conversation ID</label
-              ><input id="conversation" name="conversation" />
-              <p class="hint">Leave blank to use the app's configured destination.</p>
-            </div>
             <div>
               <label class="field-label" for="blob-key">Attachment blob key</label
               ><input id="blob-key" name="blob-key" />

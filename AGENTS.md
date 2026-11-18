@@ -56,10 +56,17 @@ filenames without page-level horizontal scrolling. Adapt layout to the app's wor
 `RUKIE_PUBLIC_URLS` maps endpoint names to public URLs. Persist durable data in
 PostgreSQL and blobs, not the container filesystem.
 
-`POST $RUKIE_API_URL/messages` sends `{request_id, conversation_id, content,
-attachments?: [{blob_key, name}]}`. Reuse the request ID after an ambiguous failure.
-Conversation destinations are app configuration. Only granted rooms are writable;
-this API does not provide conversation history or customer authentication.
+Use app-local aliases for fixed destinations and user roles. Describe each one
+in `rukie-app.json` under `connections.rooms` or `connections.users`. Set
+`human_only: true` on a user role that requires a person. User aliases are
+case-sensitive, start with an ASCII letter and contain at most 64 ASCII letters,
+digits or underscores.
+
+The report endpoint posts to `$RUKIE_API_URL/messages` with `room_alias: "reports"`.
+Use `@{reviewer}` to mention the reviewer in Markdown prose.
+The endpoint forwards the request ID, content and optional
+`{blob_key, name}` attachments to Rukie. Reuse the request ID after ambiguous
+failures and create a fresh ID for a new send after confirmed delivery.
 
 The private action request is `{invocation_id, body: {operation, action?, body?,
 attachments?}, attachments?}`. Operations are `list`, `describe`, `validate`, `invoke`.
@@ -70,9 +77,11 @@ Keep read-only actions non-mutating. Execution checks current domain state; a pr
 is not authorization. Commit mutations and the complete response receipt together;
 repeated invocation IDs return the saved response without repeating effects.
 
-Keep `rukie-app.md`, `rukie-deploy.md` and `rukie-api.md` concise and specific to this
-app: purpose, configuration/message destinations, and action usage. They are captured
-with releases. Do not put credentials, real conversation IDs or platform internals there.
+Keep the published guidance specific to this app. Give its purpose in `rukie-app.md`.
+Put required settings, aliases, their purposes and human-only roles at the start
+of `rukie-deploy.md` so they fit in the 5 KiB release preview.
+Describe the app's actions in `rukie-api.md`.
+Keep credentials and real tenant identifiers out of these documents.
 
 ## Development and validation
 
