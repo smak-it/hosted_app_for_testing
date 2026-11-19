@@ -1,8 +1,7 @@
 # Testing notes app
 
 This small reference app exercises notes, files, messaging and idempotent actions.
-The notes listener is public. A separate viewer listener demonstrates Rukie sign-in. Use synthetic data and keep examples small and
-deterministic. Preserve existing note/attachment IDs and HTTP response shapes.
+The notes listener is public. Use synthetic data and keep examples small and deterministic. Preserve existing note/attachment IDs and HTTP response shapes.
 The documented `lose_response_once` action option demonstrates a committed result
 whose reply is lost; it is part of this testing app's contract.
 
