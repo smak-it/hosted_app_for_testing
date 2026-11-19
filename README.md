@@ -71,7 +71,7 @@ See [validation/README.md](validation/README.md) for evidence and boundaries.
 ### Rukie viewer endpoint
 
 The deployed `viewer` URL demonstrates platform-managed Rukie login.
-`rukie-app.json` declares `"auth": "rukie"` on the listener at port 8082.
+`rukie-app.json` declares `"auth": "rukie"` using manifest version 2 on the listener at port 8082.
 Grant the intended workspace users access in the hosted app's settings.
 A signed-in visitor sees their stable workspace user ID as JSON at `/`.
 The separate public `web` listener continues serving the notes app.
