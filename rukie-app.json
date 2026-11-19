@@ -6,6 +6,12 @@
       "name": "web",
       "port": 8080,
       "health_path": "/health/ready"
+    },
+    {
+      "name": "viewer",
+      "port": 8082,
+      "health_path": "/health/ready",
+      "auth": "rukie"
     }
   ],
   "databases": [

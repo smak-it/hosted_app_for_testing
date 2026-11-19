@@ -66,3 +66,16 @@ interrupted, retry with the same fields to reuse the request ID.
 `lose_response_once` demonstrates retrying after a committed response was lost.
 `list_notes` is read-only.
 See [validation/README.md](validation/README.md) for evidence and boundaries.
+
+
+### Rukie viewer endpoint
+
+The deployed `viewer` URL demonstrates platform-managed Rukie login.
+`rukie-app.json` declares `"auth": "rukie"` on the listener at port 8082.
+Grant the intended workspace users access in the hosted app's settings.
+A signed-in visitor sees their stable workspace user ID as JSON at `/`.
+The separate public `web` listener continues serving the notes app.
+
+The viewer reads `X-Rukie-User-Id`, which the Rukie exposure proxy supplies after
+authenticating the request. Keep this listener behind that proxy. Local Compose
+publishes only the notes listener.

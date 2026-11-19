@@ -5,6 +5,7 @@ import { BlobStorage } from "./integrations/blobs";
 import { NotesService } from "./services/notes";
 import { publicHandler } from "./http/public";
 import { privateHandler } from "./http/private";
+import { viewerHandler } from "./http/viewer";
 const config = configuration();
 const db = new SQL(config.database, {
   max: 4,
@@ -26,10 +27,12 @@ const api = Bun.serve({
   maxRequestBodySize: 128 * 1024,
   fetch: privateHandler(service),
 });
+const viewer = Bun.serve({ port: 8082, hostname: "0.0.0.0", fetch: viewerHandler });
 console.log(`Notes ready on ${web.port}, version ${version}`);
 process.on("SIGTERM", async () => {
   await web.stop();
   await api.stop();
+  await viewer.stop();
   await db.close();
   process.exit(0);
 });
