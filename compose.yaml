@@ -6,7 +6,7 @@ services:
     volumes:
       - .:/app
       - dependencies:/app/node_modules
-    command: sh -c "bun install --frozen-lockfile && bun run format:check && bun run check && bun run lint && bun test tests && bun run build"
+    command: sh -c "bun install --frozen-lockfile && bun run format:check && bun run check && bun run lint && bun run build && bun test tests"
     environment:
       TEST_DATABASE_URL: postgres://notes:notes@checks-postgres:5432/notes_checks?sslmode=disable
     depends_on:

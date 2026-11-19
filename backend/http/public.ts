@@ -1,8 +1,8 @@
-import { resolve } from "node:path";
 import type { Config } from "../config";
 import type { NotesService } from "../services/notes";
 import { Rukie } from "../integrations/rukie";
 import { failure } from "./errors";
+import { frontendFile } from "./frontend";
 import { InputError } from "../domain/errors";
 
 function noteID(value: string) {
@@ -104,14 +104,8 @@ export function publicHandler(service: NotesService, config: Config, version: st
     }
     if (path.startsWith("/api/") || path.startsWith("/rukie") || method !== "GET")
       return new Response(null, { status: 404 });
-    const root = resolve(import.meta.dir, "../../dist");
-    const target = resolve(root, "." + decodeURIComponent(path));
-    if (!target.startsWith(root + "/") && target !== root)
-      return new Response(null, { status: 404 });
-    const asset = Bun.file(
-      path === "/" || /^\/notes\/\d+\/?$/.test(path) ? root + "/index.html" : target,
-    );
-    return (await asset.exists()) ? new Response(asset) : new Response(null, { status: 404 });
+    const page = path === "/" || /^\/notes\/\d+\/?$/.test(path);
+    return frontendFile(page ? "/index.html" : path, "index.html");
   };
   return async (req: Request) => {
     let response: Response;

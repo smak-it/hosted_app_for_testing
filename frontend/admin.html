@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Notes admin</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="/src/admin.css" />
+    <script type="module" src="/src/admin.ts"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="Notes admin home">
+        <span class="brand-mark" aria-hidden="true">N</span> Notes
+      </a>
+    </header>
+    <main class="admin-main">
+      <div class="page-heading">
+        <h1>Notes admin</h1>
+        <button id="refresh" class="button secondary small" type="button">Refresh</button>
+      </div>
+      <p id="status" class="status" role="status">Loading admin overview…</p>
+      <p id="error" class="notice error" role="alert" hidden></p>
+      <div id="overview" class="admin-overview" hidden>
+        <section class="admin-card" aria-labelledby="identity-title">
+          <h2 id="identity-title">Rukie user ID</h2>
+          <div class="admin-identity">
+            <code id="user-id" hidden></code>
+            <p id="anonymous">No Rukie identity.</p>
+            <button id="copy" class="button secondary small" type="button" hidden>Copy ID</button>
+          </div>
+        </section>
+        <section class="admin-card" aria-labelledby="app-title">
+          <h2 id="app-title">App overview</h2>
+          <dl class="admin-metrics">
+            <div>
+              <dt>Version</dt>
+              <dd id="version"></dd>
+            </div>
+            <div>
+              <dt>Notes</dt>
+              <dd id="notes"></dd>
+            </div>
+            <div>
+              <dt>Attachments</dt>
+              <dd id="attachments"></dd>
+            </div>
+          </dl>
+        </section>
+        <section class="admin-card admin-action" aria-labelledby="sample-title">
+          <div>
+            <h2 id="sample-title">Sample note</h2>
+            <p id="sample-hint">Adds a demo note to the Notes workspace.</p>
+            <p id="sample-auth">A Rukie identity is required.</p>
+          </div>
+          <button
+            id="create-sample"
+            class="button primary"
+            aria-describedby="sample-hint sample-auth"
+            type="button"
+            disabled
+          >
+            Create sample note
+          </button>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

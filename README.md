@@ -7,7 +7,7 @@ environment and browser-preference checks.
 
 A small hosted app exercising persistent notes, binary attachments, Rukie messages and
 private actions. Both backend and frontend use TypeScript; Bun serves the built Vite
-frontend and JSON API. There is no authentication: use synthetic data.
+frontend and JSON API. Use synthetic data.
 
 ## Run and check
 
@@ -16,7 +16,7 @@ docker compose up -d --build
 docker compose run --rm checks
 ```
 
-Open http://localhost:8080 (`PORT=8082` selects another port). `PUBLIC_APP_URL` sets the
+Open http://localhost:8080 (`PORT=8083` selects another port). `PUBLIC_APP_URL` sets the
 browser-facing address when using a proxy. Data survives `docker compose down`.
 For local testing, Compose accepts `RUKIE_APP_ENV=development` to change the
 environment label from its default of `production`.
@@ -54,9 +54,14 @@ host-only HttpOnly cookie and redirects to the configured URL; it is not authent
 ## Deploy and use
 
 Build `docker build --platform linux/amd64 -t testing-notes:dev .` and publish the image
-with this repository directory. The manifest declares public port 8080, private loopback
-port 8081, PostgreSQL and blobs. [rukie-deploy.md](rukie-deploy.md) describes configuration;
+with this repository directory. The manifest declares the `web` endpoint on port 8080,
+the `admin` endpoint on port 8082, private loopback port 8081, PostgreSQL and blobs.
+[rukie-deploy.md](rukie-deploy.md) describes configuration;
 [rukie-api.md](rukie-api.md) describes actions. `VERSION` identifies the image in the UI.
+
+The Admin page shows the version, note and attachment counts, and the Rukie user ID
+when the hosted proxy supplies one. Creating a sample note requires that identity.
+Local Compose publishes the Notes listener.
 
 **Send to Rukie** delivers note reports and attachments to the `reports` room.
 Include `@{reviewer}` in the message to ask for a review. If delivery is

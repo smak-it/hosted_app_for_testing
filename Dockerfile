@@ -12,5 +12,5 @@ COPY --from=build --chown=bun:bun /app/backend ./backend
 COPY --from=build --chown=bun:bun /app/shared ./shared
 COPY --from=build --chown=bun:bun /app/VERSION ./VERSION
 USER bun
-EXPOSE 8080
+EXPOSE 8080 8082
 CMD ["bun", "backend/main.ts"]

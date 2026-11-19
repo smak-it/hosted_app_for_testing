@@ -8,6 +8,7 @@ import { NotesService } from "../backend/services/notes";
 import { BlobStorage } from "../backend/integrations/blobs";
 import { publicHandler } from "../backend/http/public";
 import { privateHandler } from "../backend/http/private";
+import { adminHandler } from "../backend/http/admin";
 import { actions } from "../backend/action-api/registry";
 import {
   defineAction,
@@ -309,4 +310,58 @@ test("startup discovers the next migration and rejects edits without losing save
     await db`DROP TABLE IF EXISTS migration_probe`;
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("admin reports Rukie identity and gates sample notes on the admin listener", async () => {
+  const admin = adminHandler(service, "test");
+  const adminRequest = (path: string, method = "GET", headers?: HeadersInit) =>
+    admin(new Request("https://admin.example" + path, { method, headers }));
+  const userID = Bun.randomUUIDv7();
+  const identity = { "X-Rukie-User-Id": userID };
+  const note = await service.save("Existing note");
+  const file = new FormData();
+  file.append("file", new File(["synthetic attachment"], "example.txt"));
+  expect((await request(`/api/notes/${note.id}/attachments`, "POST", file)).status).toBe(201);
+
+  expect((await adminRequest("/health/ready")).status).toBe(200);
+  const anonymous = await adminRequest("/api/admin");
+  expect(anonymous.headers.get("Cache-Control")).toBe("no-store");
+  expect(await anonymous.json()).toEqual({
+    version: "test",
+    note_count: 1,
+    attachment_count: 1,
+    rukie_user_id: null,
+  });
+  for (const headers of [
+    {},
+    { Cookie: "__Host-rukie_hosted_app_session=example" },
+    { "X-Rukie-User-Id": "invalid" },
+    { "X-Rukie-User-Id": "00000000-0000-0000-0000-000000000000" },
+    { "X-Rukie-User-Id": `${userID}, ${Bun.randomUUIDv7()}` },
+  ]) {
+    expect((await adminRequest("/api/admin/sample-note", "POST", headers)).status).toBe(401);
+  }
+  expect(await service.dao.counts()).toEqual({ note_count: 1, attachment_count: 1 });
+
+  const identified = await adminRequest("/api/admin", "GET", identity);
+  expect(identified.headers.get("Cache-Control")).toBe("no-store");
+  expect((await identified.json()).rukie_user_id).toBe(userID);
+  const created = await adminRequest("/api/admin/sample-note", "POST", identity);
+  expect(created.status).toBe(201);
+  expect(await created.json()).toEqual({
+    note_id: note.id + 1,
+    note_count: 2,
+    attachment_count: 1,
+  });
+  expect((await service.dao.list())[0].body).toBe(
+    "Sample note\nCreated from the Notes admin demo.",
+  );
+
+  expect(await (await request("/")).text()).toContain("<title>Notes</title>");
+  expect(await (await adminRequest("/")).text()).toContain("<title>Notes admin</title>");
+  expect((await request("/%61dmin.html")).status).toBe(404);
+  expect((await adminRequest("/%69ndex.html")).status).toBe(404);
+  expect((await request("/api/admin")).status).toBe(404);
+  expect((await request("/api/admin/sample-note", "POST")).status).toBe(404);
+  expect((await adminRequest("/api/notes")).status).toBe(404);
 });
