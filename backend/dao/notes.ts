@@ -1,5 +1,6 @@
 import type { SQL, TransactionSQL } from "bun";
 import type { Note, Attachment } from "../../shared/notes";
+import type { NotesCounts } from "../../shared/admin";
 
 type NoteRow = { id: string | number; body: string; updated_at: Date };
 const note = (row: NoteRow): Note => ({
@@ -19,6 +20,13 @@ export class NotesDao {
       SELECT 1
       FROM notes LIMIT 1
     `;
+  }
+  async counts(): Promise<NotesCounts> {
+    const [row] = await this.db`
+      SELECT (SELECT count(*) FROM notes) AS note_count,
+             (SELECT count(*) FROM attachments) AS attachment_count
+    `;
+    return { note_count: Number(row.note_count), attachment_count: Number(row.attachment_count) };
   }
   async list(): Promise<Note[]> {
     const rows: NoteRow[] = await this.db`

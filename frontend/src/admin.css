@@ -1,0 +1,61 @@
+.admin-main {
+  max-width: 808px;
+}
+.admin-overview {
+  display: grid;
+  gap: 16px;
+}
+.admin-card {
+  display: grid;
+  gap: 14px;
+  padding: clamp(16px, 4vw, 24px);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.admin-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--brand-soft);
+  border-radius: 8px;
+}
+.admin-identity code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.admin-metrics dt,
+.admin-action p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.admin-metrics dd {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.admin-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.admin-action button:disabled {
+  cursor: not-allowed;
+}
+.admin-action button[aria-busy="true"] {
+  cursor: wait;
+}
